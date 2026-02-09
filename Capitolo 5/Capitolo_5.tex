@@ -1,0 +1,490 @@
+\chapter{Actuators and Sensors}
+\section{Actuators}
+
+The general architecture of a robotic actuation system follows a specific power flow. The energy is managed and transformed through several stages:
+
+\begin{enumerate}
+    \item \textbf{Power Supply}: Provides the primary power $P_R$.
+    \item \textbf{Power Amplifier}: Modulates the portion of power ($P_a$) using a control power signal $P_c$ to generate the input power $P_e$ for the motor.
+    \item \textbf{Servomotor}: Converts input power (typically electric, hydraulic, or pneumatic) into mechanical power $P_m$.
+    \item \textbf{Transmission}: Adapts the mechanical power to the load, providing the useful power $P_u$ to the joint.
+\end{enumerate}
+
+The power variables involved in the system are defined as follows:
+\begin{itemize}
+    \item $P_R$: Primary power.
+    \item $P_c$: Control power (modulates the portion of $P_a$).
+    \item $P_e$: Input power to the motor.
+    \item $P_m$: Mechanical power.
+    \item $P_u$: Useful power.
+    \item $P_{diss}$: Dissipated power (losses in the system).
+\end{itemize}
+
+\section{Transmission}
+
+The transmission system is used to adapt the high-velocity, low-torque output of the motor to the low-velocity, high-torque requirements of the robotic joint. The mechanical power is defined by the product of torque and angular velocity:
+\begin{equation}
+    P_m = \tau \omega
+\end{equation}
+
+Different types of transmissions are employed based on the mechanical requirements:
+
+\begin{enumerate}
+    \item \textbf{Gears}: Used to change the rotation axis and/or translate the application point of the force.
+    \item \textbf{Lead Screws}: Used to convert rotational motion into translational motion.
+    \item \textbf{Belts}: Allow the motor to be located far from the joint axis. They are suitable for high speed and low forces, but they are prone to deformation (elasticity).
+    \item \textbf{Chains}: Similar to belts but designed for low speed and high forces.
+    \item \textbf{Direct Drive}: A rigid transmission where the motor is connected directly to the load, meaning the reduction ratio $K_r = 1$.
+\end{enumerate}
+
+\section{Servomotors}
+
+Servomotors can be classified by the type of energy they utilize:
+
+\begin{enumerate}
+    \item \textbf{Electric Motors}: The most common type; energy is easy to find and distribute.
+    \item \textbf{Pneumatic Motors}: Energy is supplied by a compressor and transformed via pistons or turbines.
+    \item \textbf{Hydraulic Motors}: Energy is stored in a tank; they provide large torques at low speeds.
+\end{enumerate}
+
+\section{Design Requirements}
+
+To achieve high performance in robotics, the following characteristics are desired in an actuation system:
+\begin{itemize}
+    \item Low inertia and high power-to-weight ratio.
+    \item Possibility to handle overloads.
+    \item High acceleration capabilities.
+    \item Large range of velocities.
+    \item High precision in positioning.
+    \item Low torque ripple, especially at low speeds.
+\end{itemize}
+
+\section{Power Amplifier}
+
+The power amplifier is responsible for the \textbf{modulation of the power flow} from the alimentation (power supply) to the actuator. This is often achieved through components like transformers or electronic switching systems to ensure the motor receives the exact amount of energy dictated by the control signal.
+
+\section{Electric Drives}
+
+The analysis of an electric drive requires considering both mechanical and electric equilibrium.
+
+\subsection{Mechanical Equilibrium}
+
+The driving torque $C_m$ produced by the motor is proportional to the armature current $I_a$ through the torque constant $K_t$:
+\begin{equation}
+    C_m = K_t I_a
+\end{equation}
+
+The mechanical balance of the system, considering the motor's shaft, is expressed as:
+\begin{equation}
+    C_m = (s I_m + f_m) \Omega + C_l
+\end{equation}
+Where:
+\begin{itemize}
+    \item $I_m$: Moment of inertia of the motor.
+    \item $f_m$: Viscous friction coefficient.
+    \item $\Omega$: Angular velocity.
+    \item $C_l$: Load reaction torque (disturbing torque).
+\end{itemize}
+
+\subsection{Electric Equilibrium}
+
+The electrical behavior of the armature circuit is governed by the following equations:
+\begin{equation}
+    V_j = K_v \Omega
+\end{equation}
+\begin{equation}
+    V_a = (R_a + s L_a) I_a + V_j
+\end{equation}
+Where:
+\begin{itemize}
+    \item $V_j$: Back electromotive force (EMF).
+    \item $K_v$: Voltage constant.
+    \item $V_a$: Armature voltage.
+    \item $R_a$: Armature resistance.
+    \item $L_a$: Armature inductance.
+    \item $I_a$: Armature current.
+\end{itemize}
+
+\section{System Representation and Control}
+
+\subsection{Power Amplifier Modeling}
+
+The power amplifier provides the voltage $V_a$ based on a control voltage $V_c$. Its transfer function is:
+\begin{equation}
+    \frac{V_a}{V_c} = \frac{G_v}{1 + s T_v}
+\end{equation}
+In many practical robotic applications, the time constant $T_v$ is small enough to be neglected ($T_v \approx 0$), leading to $V_a \approx G_v V_c$.
+
+\subsection{Simplified Model (Velocity Controlled)}
+
+Assuming the armature inductance $L_a$ is very small and neglecting the viscous friction compared to the "electrical friction" ($f_m \ll K_v K_t / R_a$), we can analyze the system under velocity control.
+
+Using the superposition of effects to analyze the influence of the control signal $V_c'$ and the load torque $C_l$ separately:
+
+1. \textbf{Effect of Load Torque ($V_c' = 0$)}:
+The velocity variation due to the load $\Omega^1$ is:
+\begin{equation}
+    \Omega^1 = -\frac{C_l}{s I_m + f_m + \frac{K_v K_t}{R_a}}
+\end{equation}
+Which can be rewritten to highlight the steady-state gain:
+\begin{equation}
+    \Omega^1 \approx -\frac{\frac{R_a}{K_v K_t}}{1 + s \frac{R_a I_m}{K_v K_t}} C_l
+\end{equation}
+
+2. \textbf{Total Velocity Equation}:
+Combining the effects of the input voltage and the load torque, the angular velocity $\Omega$ is:
+\begin{equation}
+    \Omega = \frac{\frac{1}{K_v}}{1 + s \frac{R_a I_m}{K_v K_t}} G_v V_c' - \frac{\frac{R_a}{K_v K_t}}{1 + s \frac{R_a I_m}{K_v K_t}} C_l
+\end{equation}
+
+For further analysis of the nominal performance, we often assume $C_l = 0$.
+
+\section{Control Strategies: Velocity vs Torque Control}
+
+Based on the previous derivations, we can distinguish two main control configurations for the electric drive:
+
+\subsection{Velocity Control (VCG)}
+By choosing the gain $G_v$ such that $V_a = G_v V_c$, the system behaves as a velocity-controlled drive. 
+\begin{itemize}
+    \item The control signal $V_c$ directly influences the angular velocity $\Omega$.
+    \item This configuration is particularly suitable for \textbf{independent joint control} schemes.
+\end{itemize}
+
+\subsection{Torque Control (TCG)}
+If we choose a very high gain $G_v$, the system can be configured to control the current $I_a$, and consequently the torque $C_m$, since $C_m = K_t I_a$. 
+\begin{itemize}
+    \item In this mode, the output torque does not depend on the velocity $\Omega$.
+    \item This is often referred to as an "Amperomotor" configuration where $I_a$ is proportional to the control signal $V_c'$.
+    \item Torque control is preferred for \textbf{centralized control schemes} where dynamic interaction between joints must be managed.
+\end{itemize}
+
+\section{Current Feedback and Protection}
+
+When using an "Amperomotor" (torque control), the control signal $V_c'$ is typically proportional to the error between the desired and actual joint angle. 
+\begin{itemize}
+    \item A significant risk arises: if the error increases, $V_c'$ increases, which causes the current $I_a$ to rise, potentially burning the motor.
+    \item To prevent this, a \textbf{Dead-zone nonlinearity} or a saturation block is implemented as a protection mechanism.
+\end{itemize}
+
+
+
+\subsection{Nonlinearity Characteristics}
+The protection behaves as follows:
+\begin{itemize}
+    \item \textbf{Flat Range}: If the command is within the flat (dead) range, the loop is effectively open or inactive.
+    \item \textbf{Saturation/Limitation}: If the command is too large, it acts as a limitation to keep the current within safe operating bounds.
+\end{itemize}
+
+\section{Hydraulic Drives}
+
+Hydraulic drives utilize fluid transport for power transmission. The flow rate $Q$ is supplied by a distributor. 
+
+\subsection{Flow and Pressure Equations}
+We consider the relationship between flow ($Q$), pressure ($P$), and the displacement of the distributor ($x$):
+\begin{equation}
+    Q = K_q x - K_c P
+\end{equation}
+Where:
+\begin{itemize}
+    \item $K_q$: Flow gain.
+    \item $K_c$: Flow-pressure coefficient (representing leakage and compressibility).
+\end{itemize}
+
+In rotary motors, the displacement volume is constant, whereas for pistons, the volume changes during operation. The useful flow $Q_u$ is related to the velocity:
+\begin{equation}
+    Q_u = K_q \Omega_m
+\end{equation}
+
+\section{Hydraulic Drives: Continued}
+
+Continuing the analysis of hydraulic systems, the pressure feedback is an intrinsic part of the physical structure, unlike electric drives where current feedback is optional. The mechanical equilibrium for a hydraulic motor is given by:
+\begin{equation}
+    C_m = (s I_m + f_m) \Omega_m + C_l
+\end{equation}
+Where the torque produced is related to the pressure $P$ by the constant $k_t$:
+\begin{equation}
+    C_m = k_t P
+\end{equation}
+
+In terms of the flow rate $Q$, considering the distributor displacement $x$:
+\begin{equation}
+    P = k_x x - k_v Q
+\end{equation}
+This confirms that in hydraulic drives, the "pressure feedback" (equivalent to the back-EMF in electric motors) is built into the physics of the distributor and the fluid dynamics.
+
+\section{Transmission and Load Dynamics}
+
+When considering the motor coupled to a load through a transmission, we must account for the inertia and friction of both elements. 
+
+\subsection{System Equations}
+Let $I_m$ and $f_m$ be the motor's inertia and friction, and $I_w, f_w$ those of the load (joint). The reduction ratio is defined as $k_r = \frac{\theta_m}{\theta_l}$. The total driving torque $C_m$ required to move the system is:
+\begin{equation}
+    C_m = I_m \ddot{\theta}_m + f_m \dot{\theta}_m + \frac{1}{k_r} (I_w \ddot{\theta}_l + f_w \dot{\theta}_l + C_l)
+\end{equation}
+
+Substituting $\theta_l = \frac{\theta_m}{k_r}$, we obtain the equivalent dynamics referred to the motor shaft:
+\begin{equation}
+    C_m = \left( I_m + \frac{I_w}{k_r^2} \right) \ddot{\theta}_m + \left( f_m + \frac{f_w}{k_r^2} \right) \dot{\theta}_m + \frac{C_l}{k_r}
+\end{equation}
+
+\subsection{Equivalent Parameters}
+We can define equivalent inertia $I_{eq}$ and equivalent friction $f_{eq}$:
+\begin{itemize}
+    \item $I_{eq} = I_m + \frac{I_w}{k_r^2}$
+    \item $f_{eq} = f_m + \frac{f_w}{k_r^2}$
+\end{itemize}
+The transmission reduces the impact of the load inertia and friction by a factor of $k_r^2$, making the motor's own inertia dominant when $k_r$ is high.
+
+\section{Position Control and Nested Loops}
+
+To achieve high performance in robotic positioning, control schemes are often structured with nested loops.
+
+\subsection{VCG Position Control}
+In a Velocity Controlled (VCG) drive, the position control is typically implemented using a P.I. (Proportional-Integral) controller.
+\begin{itemize}
+    \item The integral action is crucial for disturbance rejection (such as rejecting the load torque $C_l$).
+\end{itemize}
+
+\subsection{Secondary Loop for Performance}
+To improve the transitory response, tracking capability, and bandwidth while reducing oscillations, a second loop (typically a velocity loop inside the position loop) can be closed.
+\begin{itemize}
+    \item \textbf{Wide Bandwidth}: Essential for fast tracking.
+    \item \textbf{Oscillation Damping}: Achieved through the derivative action or the secondary velocity feedback.
+\end{itemize}
+
+\section{Sensors}
+Sensors are fundamental components in robotics to perceive both the internal state of the robot and the surrounding environment. They can be classified into two main categories:
+
+\subsection{Proprioceptive Sensors}
+These sensors measure the internal state of the robot (Robot State). Key measures include:
+\begin{itemize}
+    \item Joint positions
+    \item Joint velocities
+    \item Joint torques
+\end{itemize}
+
+\subsection{Exteroceptive Sensors}
+These sensors are used to acquire information about the external environment:
+\begin{itemize}
+    \item Force
+    \item Proximity
+    \item Vision
+    \item Other measures
+\end{itemize}
+
+\section{Proprioceptive Sensors: Angular Position}
+To measure the angular position of joints, encoders are commonly used.
+
+\subsection{Absolute Encoder}
+An absolute encoder provides a unique digital code for each angular position. The physical structure consists of a disk with transparencies, a light beam, and a photo diode to detect the pattern.
+\begin{itemize}
+    \item \textbf{Structure:} Usually, we have 16 tracks, which determines the resolution.
+    \item \textbf{Gray Code:} To avoid interferences when moving from one position to the next, Gray Code is used. In this encoding, only one bit changes at a time.
+\end{itemize}
+
+The following table shows an example of the mapping between position and Gray Code:
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Position (\#) & Code \\
+\hline
+0 & 0000 \\
+1 & 0001 \\
+2 & 0011 \\
+3 & 0010 \\
+4 & 0110 \\
+\dots & \dots \\
+15 & 1000 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Incremental Encoders}
+Unlike absolute encoders, incremental encoders detect changes in position relative to a home position.
+\begin{itemize}
+    \item \textbf{Structure:} They typically use 2 tracks.
+    \item \textbf{Working Principle:} The sensor detects a pulse when the disk moves from matte to transparent.
+    \item \textbf{Direction:} Since we have 2 tracks (often in quadrature), we can determine the direction of rotation.
+    \item \textbf{Data Reconstruction:} By counting the pulses, it is possible to reconstruct both velocities and positions.
+\end{itemize}
+
+\section{Resolver}
+A resolver is another type of rotary electrical transformer used for measuring degrees of rotation.
+\begin{itemize}
+    \item The tension induced on the stator depends on the angle $\theta$.
+    \item The system utilizes a Sinusoidal signal $V \sin(\omega t)$.
+    \item Components in the processing loop include:
+    \begin{itemize}
+        \item Sine and Cosine multipliers.
+        \item Synchronous Demodulator (Synch. Demod.).
+        \item Correction Network and Integrator.
+        \item Voltage Controlled Oscillator (VCO) and a Counter.
+    \end{itemize}
+    \item The output provides information about the velocity (VEL) and position.
+\end{itemize}
+
+\section{Velocity Transducers}
+These sensors are specifically designed to measure the speed of the robot's joints.
+
+\subsection{Dynamo}
+Uses a permanent magnet. The rotor spins and generates a voltage directly proportional to the velocity.
+
+\subsection{AC Tachymeter}
+\begin{itemize}
+    \item Consists of 2 stator coils and a low inertia rotor.
+    \item The rotation of the rotor induces a current on the coils that is proportional to the velocity.
+\end{itemize}
+
+\section{Force Sensors}
+Force measurement is often achieved through the use of strain gauges.
+
+\subsection{Strain Gauge and Wheatstone Bridge}
+A strain gauge is a deformable element whose electrical resistance changes when subjected to mechanical stress. To accurately measure these small changes in resistance, a Wheatstone Bridge circuit is utilized.
+
+
+
+[Image of Wheatstone bridge circuit for strain gauge]
+
+
+\begin{itemize}
+    \item \textbf{Bridge Configuration}: The bridge consists of four resistors ($R_1, R_2, R_3, R_5$).
+    \item \textbf{Output Voltage}: The output voltage $V_o$ is derived from the input voltage $V_i$ using the following formula:
+    \[
+    V_o = \left( \frac{R_2}{R_1+R_2} - \frac{R_5}{R_3+R_5} \right) V_i
+    \]
+    \item \textbf{Accuracy Improvement}: To improve accuracy, another gauge can be used in the circuit. In this configuration, one gauge will undergo compression while the other undergoes extension.
+\end{itemize}
+
+\section{Torque and Wrist Sensors}
+These sensors are specialized for measuring rotational forces at the joints or the robot's end-effector.
+
+\subsection{Shaft Torque Sensor}
+This sensor consists of strain gauges mounted on a deformable apparatus placed between the motor and the joint.
+\begin{itemize}
+    \item \textbf{Mechanical Properties}: The apparatus must be designed with low torsional stiffness but high bending stiffness.
+    \item \textbf{Measurement}: The strain gauges measure the deformation torque. 
+    \item \textbf{Notice}: It is important to note that this measures the torque on the joint after accounting for inertial and friction torques, rather than the actual driving torque $C_m$.
+\end{itemize}
+
+\subsection{Wrist Force Sensor}
+By attaching strain sensors to the robot's wrist, it is possible to derive the full state of forces and torques acting on the end-effector.
+
+\begin{itemize}
+    \item \textbf{Matrix Formulation}: The relationship between the sensor readings ($w_1, \dots, w_8$) and the force/torque components ($l_x, l_y, l_z, M_x, M_y, M_z$) is expressed through a decoupling matrix.
+    \item \textbf{Structural Decoupling}: The design aims for a single force component to induce the least number of deformations possible, ensuring a good structural decoupling of the force components.
+\end{itemize}
+
+\section{Range Sensors}
+Range sensors are used to measure the distance between the robot and objects in the environment.
+
+\subsection{Sonar (Sound Navigation and Ranging)}
+Sonar sensors use acoustic pulses and their echoes to determine the range to an object.
+\begin{itemize}
+    \item \textbf{Frequency Range}: Typically operates between 20 kHz and 200 kHz.
+    \item \textbf{Beamwidth}: Usually around 15 degrees.
+    \item \textbf{Distance Calculation}: The distance $d_0$ is calculated based on the time of flight $t_v$ and the speed of sound $c_s$:
+    \[
+    d_0 = \frac{c_s t_v}{2}
+    \]
+    \item \textbf{Speed of Sound}: The velocity $c_s$ is temperature-dependent and can be estimated as:
+    \[
+    c_s = 20.05 \sqrt{T + 273.16} \text{ m/s}
+    \]
+\end{itemize}
+
+\section{Transducer Technologies and Sonar Limitations}
+The physical implementation of sonar sensors relies on specific transducer types:
+\begin{itemize}
+    \item \textbf{Piezoelectric Transducer}: Vibrates under the action of an electric field.
+    \item \textbf{Capacitive Transducer}: Consists of a capacitor whose armature deforms due to sound pressure, resulting in a change in voltage.
+\end{itemize}
+Both transducers can function as both receivers and transmitters.
+
+\section{Lasers}
+Laser sensors offer several advantages for robotic perception:
+\begin{itemize}
+    \item \textbf{Infrared}: Non-intrusive.
+    \item \textbf{Narrow Beams}: High resolution.
+    \item \textbf{Single Frequency}: Do not disperse.
+\end{itemize}
+
+\subsection{Time-of-Flight Laser Sensor}
+This sensor measures the time interval for a pulse to return. 
+\begin{itemize}
+    \item \textbf{Minimum Distance}: A limitation is the minimum measurable time interval, which determines the minimum measurable distance.
+    \item \textbf{Ambiguity Problem}: The sensor emits pulses and accepts returning signals within a specific time window.
+    \item \textbf{Signal Interpretation}: If an old signal returns after the window, it can be misinterpreted as a new signal.
+    \item \textbf{Maximum Distance}: The maximum measurable distance without ambiguity is limited by this timing.
+\end{itemize}
+
+\subsection{Triangulation Laser Sensor}
+This method uses geometry to compute distance:
+\begin{itemize}
+    \item The laser hits an object and the light diffuses once reflected.
+    \item The reflected light hits a CCD sensor.
+    \item The CCD determines the exact point where the light hit; thanks to this information, the distance can be computed.
+\end{itemize}
+
+\section{Vision Sensors}
+Vision systems generally use two types of solid-state technologies.
+
+\subsection{CCD (Charged Coupled Device)}
+\begin{itemize}
+    \item Consists of an array of photosites.
+    \item When a photon hits a photosite, free electrons are created.
+    \item As long as the shutter is open, the electrons keep accumulating.
+    \item Subsequently, the electrons are shifted to be amplified in order to create the image.
+\end{itemize}
+
+\subsection{CMOS}
+\begin{itemize}
+    \item Also an array, but each pixel has its own amplifier, so it does not need shifting.
+    \item It does not have electrons accumulate in the same way because each pixel generates a current depending on the quantity of photons.
+\end{itemize}
+
+\subsection{Camera}
+A camera system is composed of several functional blocks that process incoming light into a video signal.
+
+\subsubsection{Camera Structure}
+The internal components include:
+\begin{itemize}
+    \item \textbf{Optics}: Shutter, lens, and a sensor (CCD or CMOS).
+    \item \textbf{Timing and Sync}: Control the acquisition process.
+    \item \textbf{Analog Electronics}: Process the raw sensor data before the video output.
+\end{itemize}
+
+
+\subsection{Camera Model and Coordinate Mapping}
+To relate a point in the 3D world to a 2D image plane, we use a geometric model based on the lens center.
+
+\subsubsection{Perspective Projection}
+Let $\tilde{P}$ be a point in the base frame. Its coordinates in the camera frame $\tilde{P}^c$ are obtained via a transformation matrix:
+\[
+\tilde{P}^c = T_b^c \tilde{P}
+\]
+Where:
+\begin{itemize}
+    \item $P^c = [P_x^c, P_y^c, P_z^c]^T$ represents the coordinates in the camera reference frame.
+    \item The optical axis is aligned with $Z_c$, and $f$ is the focal distance from the lens center to the image plane.
+\end{itemize}
+
+The coordinates $(X, Y)$ on the image plane are derived through perspective projection:
+\[
+X = -f \frac{P_x^c}{P_z^c}, \quad Y = -f \frac{P_y^c}{P_z^c}
+\]
+
+
+\subsubsection{Transformation to Pixel Coordinates}
+To express these coordinates in terms of pixels $(X_i, Y_i)$, we apply scaling and offset factors (intrinsic parameters):
+\begin{itemize}
+    \item \textbf{Scaling factors}: $a_x$ and $a_y$ represent the transformation from physical units to pixels.
+    \item \textbf{Principal Point}: $(X_0, Y_0)$ is the coordinate of the optical center on the pixel grid.
+\end{itemize}
+
+The final pixel coordinates are calculated as:
+\[
+X_i = a_x X + X_0
+\]
+\[
+Y_i = a_y Y + Y_0
+\]

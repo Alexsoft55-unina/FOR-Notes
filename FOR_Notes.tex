@@ -1,0 +1,23 @@
+\documentclass{book}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+\geometry{a4paper, margin=1in}
+%\input{file}: Si limita a "copiare e incollare" il contenuto del file nel punto esatto in cui scrivi il comando. Non aggiunge spazi né interruzioni. È come se il testo fosse scritto direttamente lì.
+
+%\include{file}: Forza sempre un salto di pagina (\clearpage) sia prima che dopo il contenuto del file. Per questo motivo è perfetto per i capitoli di una tesi o di un libro.
+
+\begin{document}
+\chapter{Introduction}
+\input{Capitolo 2/Capitolo_2.tex}
+\input{Capitolo 3/Capitolo_3.tex}
+\input{Capitolo 4/Capitolo_4.tex}
+\input{Capitolo 5/Capitolo_5.tex}
+\input{Capitolo 6/Capitolo_6.tex}
+
+\end{document}

@@ -1,0 +1,1177 @@
+\chapter{Trajectory Planning}
+
+\section{Trajectory Planning}
+
+A trajectory is defined as the union of a path and a time law:
+\begin{itemize}
+    \item \textbf{Path}: Geometric description (set of points).
+    \item \textbf{Time Law}: Specifies velocities and accelerations along the path.
+\end{itemize}
+
+The trajectory planner receives the path, time law, limits, and obstacles as input to generate the reference variables for the control system: $q_d, \dot{q}_d, \ddot{q}_d$ or $x_d, \dot{x}_d, \ddot{x}_d$.
+
+\subsection{Path and Time Law Description}
+\begin{itemize}
+    \item \textbf{Path Description}: Includes initial and final points, intermediate points of interest, and the primitive of motion (how to connect the points).
+    \item \textbf{Time Law}: Includes total time, maximum velocities/accelerations, and specific velocity/acceleration constraints at certain points.
+\end{itemize}
+
+Trajectory planning can occur in the \textbf{joint space} or in the \textbf{operational space}.
+
+\section{Point-to-Point Motion}
+
+We must choose a trajectory that is easy to compute and continuous in position, velocity, and acceleration.
+
+
+\subsection{Polynomial Trajectories}
+
+For a single rigid body with model $I \dot{\omega} = \tau$ and $\omega = \dot{q}$, we want to minimize the control effort:
+\begin{equation}
+\min J = \int_{0}^{t_f} \tau^2(t) dt
+\end{equation}
+
+
+The type of solution for the velocity profile is $w(t) = at^2 + bt + c$. Consequently, the position is described by a 3rd grade polynomial:
+\begin{equation}
+q(t) = a_3 t^3 + a_2 t^2 + a_1 t + a_0
+\end{equation}
+
+
+To find the 4 unknown coefficients, we use 4 boundary conditions:
+\begin{align}
+q(0) &= q_i = a_0 \\
+q(t_f) &= q_f = a_3 t_f^3 + a_2 t_f^2 + a_1 t_f + a_0 \\
+\dot{q}(0) &= \dot{q}_i = a_1 \\
+\dot{q}(t_f) &= \dot{q}_f = 3 a_3 t_f^2 + 2 a_2 t_f + a_1
+\end{align}
+
+
+Note: If we want to impose a specific acceleration at the boundaries, a 5th grade polynomial is required.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Capitolo 4/Immagini/results_traj.png}
+    \caption{Graphics.}
+\end{figure}
+
+\subsection{Trapezoidal Velocity Trajectories (LSPB)}
+
+Usually, we want a trapezoid velocity profile. This approach results in a trajectory composed of a constant acceleration phase, a constant velocity phase, and a constant deceleration phase.
+
+\begin{figure}[H]
+    \centering
+    % Sostituisci con il percorso della tua immagine se necessario
+    \includegraphics[width=0.3\textwidth]{Capitolo 4/Immagini/trapezoidal_profile.png} 
+    \caption{Position $q(t)$, velocity $\dot{q}(t)$, and acceleration $\ddot{q}(t)$ profiles for LSPB.}
+\end{figure}
+
+
+
+The symmetry of the trajectory implies:
+\begin{equation}
+t_m = \frac{t_f}{2}, \quad q_m = \frac{q_i + q_f}{2}
+\end{equation}
+
+For the linear segment (constant velocity $\dot{q}_c$) starting at $t_c$, the position is derived from the line equation:
+\begin{align}
+q &= q_0 + m(t - x_0) + q_i \\
+q_0 &= \frac{1}{2} \dot{q}_c t_c, \quad m = \dot{q}_c, \quad x_0 = t_c \nonumber \\
+&\Rightarrow \frac{1}{2} \dot{q}_c t_c + \dot{q}_c(t - t_c) + q_i
+\end{align}
+
+Given that $\dot{q}_c = \ddot{q}_c t_c$, the position during the linear phase can be expressed as:
+\begin{equation}
+q(t) = \frac{1}{2} \ddot{q}_c t_c^2 - \ddot{q}_c t_c^2 + \ddot{q}_c t_c t + q_i
+\end{equation}
+
+The complete mathematical description of the position trajectory $q(t)$ is:
+\begin{equation}
+q(t) = 
+\begin{cases} 
+q_i + \frac{1}{2} \ddot{q}_c t^2 & 0 \leq t \leq t_c \\
+q_i + \ddot{q}_c t_c \left( t - \frac{1}{2} t_c \right) & t_c < t \leq t_f - t_c \\
+q_f - \frac{1}{2} \ddot{q}_c (t_f - t)^2 & t_f - t_c < t \leq t_f
+\end{cases}
+\end{equation}
+
+\textbf{Pros:} Constant acceleration and velocity segments.
+
+\textbf{Con:} Not the optimal solution: $J$ increases by $12.5\%$.
+
+If $\ddot{q}_c$ is specified, we can find the acceleration time $t_c$. The base constraint is that the motion lasts $t_f$ and moves from $q_i$ to $q_f$.
+
+The displacement is equivalent to the area under the velocity profile:
+\begin{equation}
+q_i + t_c \dot{q}_c + (t_f - 2t_c)\dot{q}_c = q_f
+\end{equation}
+
+Knowing that $\dot{q}_c = \ddot{q}_c t_c$, we can substitute to obtain the quadratic equation:
+\begin{equation}
+\ddot{q}_c t_c^2 - \ddot{q}_c t_f t_c + q_f - q_i = 0
+\end{equation}
+
+Solving for $t_c$:
+\begin{equation}
+t_c = \frac{t_f}{2} - \frac{1}{2} \sqrt{\frac{t_f^2 \ddot{q}_c - 4(q_f - q_i)}{\ddot{q}_c}}
+\end{equation}
+
+To ensure a real solution, the term inside the square root (the numerator) must be $\geq 0$. This leads to the following constraint on the acceleration:
+\begin{equation}
+|\ddot{q}_c| \geq \frac{4 |q_f - q_i|}{t_f^2}
+\end{equation}
+
+If $\ddot{q}_c$ reaches the lower limit of this inequality, the velocity profile is no longer trapezoidal but triangular, with $t_c = t_m = \frac{t_f}{2}$.
+
+\section{Multiple Points Trajectories}
+
+If $N$ points must be connected, a single polynomial of degree $N-1$ would be required. This approach is computationally intensive and susceptible to oscillations (Runge's phenomenon).
+
+\subsection{Cubic Splines}
+
+To avoid these issues, we use $N-1$ polynomials of 3rd degree ($\Pi_k$) with continuity constraints. Each segment $\Pi_k$ is defined between $t_k$ and $t_{k+1}$.
+
+\begin{equation}
+    \Pi_k(t) \text{ with } t \in [t_k, t_{k+1}]
+\end{equation}
+
+For each segment, we impose the following boundary conditions:
+\begin{align}
+    \Pi_k(t_k) &= q_k \\
+    \Pi_k(t_{k+1}) &= q_{k+1} \\
+    \dot{\Pi}_k(t_k) &= \dot{q}_k \\
+    \dot{\Pi}_k(t_{k+1}) &= \dot{q}_{k+1}
+\end{align}
+
+To ensure velocity continuity at the internal waypoints, we require:
+\begin{equation}
+    \dot{\Pi}_k(t_{k+1}) = \dot{\Pi}_{k+1}(t_{k+1})
+\end{equation}
+
+For $N$ waypoints, we have $N-1$ segments and $4(N-1)$ coefficients to determine.
+
+\subsection{Velocity Assignment}
+
+If the velocities $\dot{q}_k$ are not specified, they can be calculated using the average velocity of adjacent segments $V_k = \frac{q_k - q_{k-1}}{t_k - t_{k-1}}$:
+
+\begin{equation}
+\begin{cases} 
+    \dot{q}_1 = 0 \\
+    \dot{q}_n = \begin{cases} 0 & \text{if } \text{sgn}(V_n) \neq \text{sgn}(V_{n+1}) \\ \frac{1}{2}(V_n + V_{n+1}) & \text{if } \text{sgn}(V_n) = \text{sgn}(V_{n+1}) \end{cases} \\
+    \dot{q}_N = 0
+\end{cases}
+\end{equation}
+
+Note: This ensures velocity continuity ($C^1$), but there will be jumps in the acceleration profile at the waypoints.
+
+\subsection{Acceleration Continuity ($C^2$)}
+
+To achieve $C^2$ continuity, we add acceleration constraints at each internal node $t_n$:
+\begin{itemize}
+    \item $\Pi_{n-1}(t_n) = q_n$ (Connect position)
+    \item $\Pi_{n-1}(t_n) = \Pi_n(t_n)$ (Continuous position)
+    \item $\dot{\Pi}_{n-1}(t_n) = \dot{\Pi}_n(t_n)$ (Continuous velocity)
+    \item $\ddot{\Pi}_{n-1}(t_n) = \ddot{\Pi}_n(t_n)$ (Continuous acceleration)
+\end{itemize}
+
+However, for $k=1, \dots, N$, the terms $\Pi_0(t_1)$ and $\Pi_N(t_N)$ do not exist. This creates a mathematical inconsistency in the boundary segments that must be resolved with additional conditions.
+
+\subsection{Virtual Points Approach}
+
+To satisfy all continuity constraints, we analyze the balance between equations and unknowns. For $N-2$ intermediate waypoints, we have 4 equations each, totaling $4(N-2)$ equations. Adding the 3 equations for the initial point and 3 for the final point (+6 equations), we obtain:
+\begin{equation}
+    4(N-2) + 6 = 4N - 2 \text{ equations}
+\end{equation}
+However, with $N-1$ segments, there are $4(N-1)$ unknowns. Since $4N - 2 > 4(N-1)$, the system is overdetermined. To solve this, we introduce 2 virtual points, resulting in $N+2$ total points and $N+1$ polynomials.
+
+Consider $N+2$ time instants $t_k$, where $t_2$ and $t_{N+1}$ refer to the virtual points.
+
+For the $N-2$ intermediate points ($k=3, \dots, N$), we define 4 equations each:
+\begin{align}
+    \Pi_{k-1}(t_k) &= q_k \\
+    \Pi_{k-1}(t_k) &= \Pi_k(t_k) \\
+    \dot{\Pi}_{k-1}(t_k) &= \dot{\Pi}_k(t_k) \\
+    \ddot{\Pi}_{k-1}(t_k) &= \ddot{\Pi}_k(t_k)
+\end{align}
+
+For the initial and final points, we impose position, velocity, and acceleration (6 equations total):
+\begin{align}
+    \Pi_1(t_1) &= q_i & \Pi_{N+1}(t_{N+2}) &= q_f \\
+    \dot{\Pi}_1(t_1) &= \dot{q}_i & \dot{\Pi}_{N+1}(t_{N+2}) &= \dot{q}_f \\
+    \ddot{\Pi}_1(t_1) &= \ddot{q}_i & \ddot{\Pi}_{N+1}(t_{N+2}) &= \ddot{q}_f
+\end{align}
+
+Finally, for the virtual points ($k=2$ and $k=N+1$), we impose position, velocity, and acceleration continuity (6 equations total):
+\begin{align}
+    \Pi_{k-1}(t_k) &= \Pi_k(t_k) \\
+    \dot{\Pi}_{k-1}(t_k) &= \dot{\Pi}_k(t_k) \\
+    \ddot{\Pi}_{k-1}(t_k) &= \ddot{\Pi}_k(t_k)
+\end{align}
+
+In total, the system now has:
+\begin{equation}
+    4(N-2) + 6 + 6 = 4(N+1) \text{ equations}
+\end{equation}
+With $N+1$ polynomials, we have exactly $4(N+1)$ unknowns, making the system solvable via standard algorithms.
+
+\section{Interpolating Linear Polynomials with Parabolic Blends}
+
+In this approach, instead of interpolating exactly through all points with high-order curves, we use linear segments and "pass by" the points using parabolic blends.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Capitolo 4/Immagini/linear_parabolic_blend.png}
+    \caption{Trajectory with linear segments and parabolic blends.}
+\end{figure}
+
+
+The velocity of the linear segment and the acceleration during the blend are calculated as:
+\begin{align}
+    \dot{q}_{n-1,n} &= \frac{q_n - q_{n-1}}{\Delta t_{n-1}} \\
+    \ddot{q}_n &= \frac{\dot{q}_{n,n+1} - \dot{q}_{n-1,n}}{\Delta t'_n}
+\end{align}
+
+For example, at the first internal waypoint ($n=2$):
+\begin{itemize}
+    \item $\dot{q}_{1,2} = \frac{q_2 - q_1}{\Delta t_1}$ is the average velocity from $q_1$ to $q_2$.
+    \item $\ddot{q}_2 = \frac{\dot{q}_{2,3} - \dot{q}_{1,2}}{\Delta t'_2}$ represents the difference in velocity divided by the time allowed to change.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Capitolo 4/Immagini/linear_parabolic_graphics.png}
+    \caption{Trajectory with linear segments and parabolic blends.}
+\end{figure}
+
+Using trapezoidal profiles allows the trajectory to touch the points exactly, but requires stopping at each one. By summing shifted trapezoidal profiles, we avoid exact point intersection but gain a computationally easier and smoother transition.
+
+\section{Operational Space Trajectories}
+
+In operational space, we define the end-effector position $x_e(t)$ (e.g., a $2 \times 1$ or $3 \times 1$ vector). Given a sequence of points $P_1, P_2, \dots, P_N$, we can plan the trajectory $x_e(t_n)$ for $t_n \in [t_1, t_N]$ using various methods:
+\begin{itemize}
+    \item Polynomials
+    \item Linear Polynomials with Parabolic Blends
+    \item Splines
+\end{itemize}
+
+The generated operational space trajectory is then passed through \textbf{Inverse Kinematics} to obtain the joint space references.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Capitolo 4/Immagini/operational_space_path.png}
+    \caption{Path primitives and inverse kinematics mapping.}
+\end{figure}
+
+\subsection{Path Primitives}
+
+A path $\Gamma$ is a locus of points in $\mathbb{R}^3$ described by a parameter $\sigma$:
+\begin{equation}
+    p = f(\sigma), \quad \sigma \in [\sigma_i, \sigma_f]
+\end{equation}
+
+\subsubsection{Arc Length as Parameter}
+
+By choosing the arc length $s$ as the parameter ($\sigma \equiv s$), we define the path in terms of the distance traveled along it:
+\begin{equation}
+    p = f(s), \quad s \in [0, s_f]
+\end{equation}
+
+At any point on the path, we define a \textbf{Right Handed Frame} $(t, n, b)$:
+\begin{itemize}
+    \item \textbf{Tangent}: $t = \frac{dp}{ds}$
+    \item \textbf{Normal}: $n = \frac{1}{\|\frac{d^2p}{ds^2}\|} \frac{d^2p}{ds^2}$
+    \item \textbf{Binormal}: $b = t \times n$
+\end{itemize}
+
+
+\subsection{Rectilinear Path}
+
+For a straight line between $p_i$ and $p_f$:
+\begin{equation}
+    f(s) = p_i + \frac{s}{\|p_f - p_i\|} (p_f - p_i), \quad s \in [0, \|p_f - p_i\|]
+\end{equation}
+Boundary checks:
+\begin{itemize}
+    \item $f(0) = p_i$
+    \item $f(s_f) = p_i + \frac{\|p_f - p_i\|}{\|p_f - p_i\|} (p_f - p_i) = p_f$
+\end{itemize}
+The tangent is constant, and the normal is zero:
+\begin{equation}
+    t = \frac{dp}{ds} = \frac{p_f - p_i}{\|p_f - p_i\|}, \quad n = 0
+\end{equation}
+
+\subsection{Circular Path}
+
+To define a circular path, we need an axis $\hat{r}$, a point on the axis $d$, and a point on the circumference $p_i$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 4/Immagini/circular_path_geometry.png}
+    \caption{Geometry of a circular path in 3D space.}
+\end{figure}
+
+The center of the circle $c$ and the radius $\rho$ are:
+\begin{align}
+    \delta &= p_i - d \\
+    c &= d + (\delta^T r) r \\
+    \rho &= \|p_i - c\|
+\end{align}
+
+In a new reference frame $O'x'y'z'$, the path coordinates $p'(s)$ for $s \in [0, 2\pi\rho)$ are:
+\begin{equation}
+    p'(s) = \begin{bmatrix} \rho \cos(s/\rho) \\ \rho \sin(s/\rho) \\ 0 \end{bmatrix}
+\end{equation}
+
+Transforming back to the base frame using rotation matrix $R = [x' \ y' \ z']$:
+\begin{equation}
+    p(s) = c + R p'(s)
+\end{equation}
+
+The tangent and normal vectors are derived as:
+\begin{align}
+    t &= \frac{dp}{ds} = R \frac{dp'(s)}{ds} = R \begin{bmatrix} -\sin(s/\rho) \\ \cos(s/\rho) \\ 0 \end{bmatrix} \\
+    n &= \frac{d^2p}{ds^2} = R \begin{bmatrix} -\cos(s/\rho)/\rho \\ -\sin(s/\rho)/\rho \\ 0 \end{bmatrix}
+\end{align}
+
+\section{Time Law along a Path}
+
+To complete the trajectory description, we need to define how the path parameter $s$ evolves over time, denoted as $s(t)$. This is the \textbf{Time Law}.
+
+The end-effector position is defined as:
+\begin{equation}
+    p_e(t) = f(s(t))
+\end{equation}
+
+The velocity and acceleration profiles are derived using the chain rule:
+\begin{align}
+    \dot{p}_e(t) &= \frac{d f(s)}{d s} \dot{s} = \dot{s} \hat{t} \\
+    \ddot{p}_e(t) &= \ddot{s} \hat{t} + \dot{s}^2 \hat{n}
+\end{align}
+Where the second term in the acceleration equation represents the \textbf{Centripetal Acceleration}.
+
+\subsection{Analytical Derivation of Acceleration}
+
+The acceleration can be derived step-by-step from the velocity:
+\begin{align}
+    \frac{d}{dt} \left( \frac{df}{ds} \dot{s} \right) &= \left( \frac{d}{dt} \left( \frac{df}{ds} \right) \right) \dot{s} + \frac{df}{ds} \ddot{s} \\
+    &= \left( \frac{d}{ds} \left( \frac{df}{dt} \right) \right) \dot{s} + \frac{df}{ds} \ddot{s} \\
+    &= \frac{d}{ds} (\dot{s} \hat{t}) \dot{s} + \hat{t} \ddot{s} \\
+    &= \left( \frac{d\dot{s}}{ds} \hat{t} + \dot{s} \frac{d\hat{t}}{ds} \right) \dot{s} + \hat{t} \ddot{s}
+\end{align}
+Given that $\frac{d\hat{t}}{ds} = \frac{1}{\rho} \hat{n} = \kappa \hat{n}$, where $\kappa$ is the curvature, we obtain:
+\begin{equation}
+    \ddot{p}_e(t) = \ddot{s} \hat{t} + \dot{s}^2 \hat{n}
+\end{equation}
+
+\subsection{Kinematics of Path Primitives}
+
+\subsubsection{Rectilinear Path}
+For a straight line, the end-effector position and its derivatives are:
+\begin{align}
+    p_e(t) &= p_i + \frac{s(t)}{\|p_f - p_i\|} (p_f - p_i) \\
+    \dot{p}_e(t) &= \frac{\dot{s}}{\|p_f - p_i\|} (p_f - p_i) = \dot{s} \hat{t} \\
+    \ddot{p}_e(t) &= \frac{\ddot{s}}{\|p_f - p_i\|} (p_f - p_i) = \ddot{s} \hat{t}
+\end{align}
+Note: A rectilinear path involves \textbf{only linear acceleration}, as $\hat{n} = 0$.
+
+\subsubsection{Circular Path}
+For a circular path, using the rotation matrix $R$:
+\begin{align}
+    p_e &= c + R \begin{bmatrix} \rho \cos(s/\rho) \\ \rho \sin(s/\rho) \\ 0 \end{bmatrix} \\
+    \dot{p}_e &= R \begin{bmatrix} -\dot{s} \sin(s/\rho) \\ \dot{s} \cos(s/\rho) \\ 0 \end{bmatrix} = \dot{s} \hat{t} \\
+    \ddot{p}_e &= R \begin{bmatrix} -\frac{\dot{s}^2}{\rho} \cos(s/\rho) - \ddot{s} \sin(s/\rho) \\ -\frac{\dot{s}^2}{\rho} \sin(s/\rho) + \ddot{s} \cos(s/\rho) \\ 0 \end{bmatrix} = \ddot{s} \hat{t} + \dot{s}^2 \hat{n}
+\end{align}
+
+\section{Multi-point Trajectories with Anticipated Timing}
+
+Consider $N+1$ points in the operational space. The path consists of $N$ segments connected linearly. The position of the end-effector is described by:
+
+\begin{equation}
+p_e(t) = p_0 + \sum_{j=1}^{N} \frac{s_j(t)}{\|p_j - p_{j-1}\|} (p_j - p_{j-1})
+\end{equation}
+
+The curvilinear abscissa $s_j(t)$ for the $j$-th segment is defined as:
+
+\begin{equation}
+s_j(t) = 
+\begin{cases} 
+0 & 0 \le t \le t_{j-1} \\
+s_j(t) & t_{j-1} < t \le t_j \\
+\|p_j - p_{j-1}\| & t_j < t \le t_N
+\end{cases}
+\end{equation}
+
+Velocity and acceleration profiles are obtained by differentiation:
+
+\begin{equation}
+\dot{p}_e(t) = \sum_{j=1}^{N} \frac{\dot{s}_j(t)}{\|p_j - p_{j-1}\|} (p_j - p_{j-1}) = \sum_{j=1}^{N} \dot{s}_j \hat{t}_j
+\end{equation}
+
+\begin{equation}
+\ddot{p}_e(t) = \sum_{j=1}^{N} \ddot{s}_j \hat{t}_j
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Capitolo 4/Immagini/robot_stops.png}
+    \caption{Velocity profile where the robot stops at each waypoint $p_j$.}
+\end{figure}
+
+To avoid stops at waypoints and ensure a smooth transition, the second trapezoidal profile is anticipated by a time interval $\delta t_j$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Capitolo 4/Immagini/anticipated_trapezoid.png}
+    \caption{Anticipated velocity profile for trajectory blending.}
+\end{figure}
+
+The shifted curvilinear abscissa $s_j(t)$ is defined by:
+
+\begin{equation}
+s_j(t) = 
+\begin{cases} 
+0 & 0 \le t \le t_{j-1} - \Delta t_j \\
+s_j(t + \Delta t_j) & t_{j-1} - \Delta t_j < t \le t_j - \Delta t_j \\
+\|p_j - p_{j-1}\| & t_j - \Delta t_j < t \le t_N - \Delta t_N
+\end{cases}
+\end{equation}
+
+The cumulative time shift $\Delta t_j$ follows the recursive relation:
+
+\begin{align}
+\Delta t_j &= \Delta t_{j-1} + \delta t_j \\
+\Delta t_0 &= 0
+\end{align}
+
+\section{Orientation Trajectories}
+
+The orientation of the end-effector is represented by the rotation matrix $R = \begin{bmatrix} n_e(t) & s_e(t) & a_e(t) \end{bmatrix}$, describing the transition from an initial orientation $R_i$ to a final orientation $R_f$. Since it is numerically difficult to ensure that $R$ remains orthonormal throughout the motion, alternative representations are used.
+
+\subsection{Euler Angles}
+
+Using Euler angles $\phi$, the trajectory can be interpolated linearly in the angle space:
+
+\begin{equation}
+\phi_e = \phi_i + \frac{s(t)}{\|\phi_f - \phi_i\|} (\phi_f - \phi_i)
+\end{equation}
+
+The corresponding angular velocity and acceleration in the Euler space are:
+
+\begin{equation}
+\dot{\phi}_e = \frac{\dot{s}}{\|\phi_f - \phi_i\|} (\phi_f - \phi_i)
+\end{equation}
+
+\begin{equation}
+\ddot{\phi}_e = \frac{\ddot{s}}{\|\phi_f - \phi_i\|} (\phi_f - \phi_i)
+\end{equation}
+
+The physical angular velocity $\omega_e$ can then be derived using the transformation matrix $T(\phi_e)$:
+\begin{equation}
+\omega_e = T(\phi_e) \dot{\phi}_e
+\end{equation}
+
+\subsection{Axis-Angle Representation}
+
+To avoid the singularities associated with Euler angles, the Axis-Angle representation can be employed. We define the relative rotation matrix $R_f^i$ such that $R_f = R_i R_f^i$:
+
+\begin{equation}
+R_f^i = R_i^T R_f = \begin{bmatrix} r_{11} & r_{12} & r_{13} \\ r_{21} & r_{22} & r_{23} \\ r_{31} & r_{32} & r_{33} \end{bmatrix}
+\end{equation}
+
+From $R_f^i$, we derive the total rotation angle $\theta_f$ and the unit rotation axis $r$:
+
+\begin{equation}
+\theta_f = \cos^{-1} \left( \frac{r_{11} + r_{22} + r_{33} - 1}{2} \right)
+\end{equation}
+
+\begin{equation}
+r = \frac{1}{2 \sin(\theta_f)} \begin{bmatrix} r_{32} - r_{23} \\ r_{13} - r_{31} \\ r_{21} - r_{12} \end{bmatrix} \quad \text{for } \sin(\theta_f) \neq 0
+\end{equation}
+
+The time-varying orientation is then $R(t) = R_i R^i(t)$, with boundary conditions $R^i(0) = I$ and $R^i(t_f) = R_f^i$. Since the axis $r$ is fixed in space, we can apply polynomials to generate a time law for $\theta(t)$. The angular velocity and acceleration are:
+
+\begin{align}
+\omega_e^i &= \dot{\theta} r \\
+\dot{\omega}_e^i &= \ddot{\theta} r
+\end{align}
+
+\section{Dynamics: Equations of Motion of the Manipulator}
+The study of manipulator dynamics establishes the relationship between the forces and moments applied to the structure and the resulting motion over time.
+
+\subsection{Lagrangian Formulation}
+The dynamic model can be derived using the Lagrangian approach, where the Lagrangian function $L$ is defined as the difference between kinetic energy $T$ and potential energy $U$:
+\begin{equation}
+    L = T - U
+\end{equation}
+
+The equations of motion are obtained through the Euler-Lagrange equations:
+\begin{equation}
+    \frac{d}{dt} \frac{\partial L}{\partial \dot{q}_i} - \frac{\partial L}{\partial q_i} = \xi_i
+\end{equation}
+where $q_i$ represents the generalized coordinates and $\xi_i$ represents the non-conservative generalized forces (torques and frictions).
+
+\subsection{Case Study: Single Joint System}
+Considering a system with a motor and a load (link) connected via a transmission with gear ratio $K_r \gg 1$. Let $I_m$ be the motor inertia and $I$ the load inertia.
+
+The external forces and torques are related by:
+\begin{equation}
+    \theta_m = K_r \theta, \quad \tau = K_r \tau_m
+\end{equation}
+
+The kinetic energy $T$ and potential energy $U$ are:
+\begin{equation}
+    T = \frac{1}{2} I \dot{\theta}^2 + \frac{1}{2} I_m \dot{\theta}_m^2 = \frac{1}{2} I \dot{\theta}^2 + \frac{1}{2} I_m K_r^2 \dot{\theta}^2
+\end{equation}
+\begin{equation}
+    U = mgl(1 - \cos\theta)
+\end{equation}
+
+The resulting Lagrangian is:
+\begin{equation}
+    L = \frac{1}{2} (I + I_m K_r^2) \dot{\theta}^2 - mgl(1 - \cos\theta)
+\end{equation}
+
+Including friction terms $F$ (link) and $F_m$ (motor), the equation of motion becomes:
+\begin{equation}
+    (I + I_m K_r^2) \ddot{\theta} + mgl \sin\theta = \tau - F \dot{\theta} - F_m K_r^2 \dot{\theta}
+\end{equation}
+
+Rearranging into the final equation of motion:
+\begin{equation}
+    (I + I_m K_r^2) \ddot{\theta} + (F + F_m K_r^2) \dot{\theta} + mgl \sin\theta = \tau
+\end{equation}
+
+\section{Computation of Kinetic Energy}
+For a manipulator with $n$ links, the total kinetic energy is the sum of the kinetic energies of the links and the motors:
+\begin{equation}
+    T = \sum_{i=1}^{n} (T_{li} + T_{mi})
+\end{equation}
+where $T_{li}$ is the kinetic energy of link $i$ and $T_{mi}$ is the kinetic energy of the motor actuating joint $i$.
+
+\subsection{Kinetic Energy of Link $i$}
+The kinetic energy of a rigid body (link $i$) is calculated by integrating the velocity of its elementary masses:
+\begin{equation}
+    T_{li} = \frac{1}{2} \int_{V_{li}} \dot{P}_i^{*T} \dot{P}_i^* \rho dV
+\end{equation}
+where $\dot{P}_i^*$ is the linear velocity of a generic point on the link.
+
+\subsubsection{Velocity of a Generic Point}
+Defining $P_{li}$ as the position of the center of mass:
+\begin{equation}
+    P_{li} = \frac{1}{m_{li}} \int_{V_{li}} P_i^* \rho dV
+\end{equation}
+
+The velocity of a generic point $P_i^*$ can be expressed as:
+\begin{equation}
+    P_i^* = P_{li} + \omega_i \times z_i = \dot{P}_{li} + S(\omega_i) z_i
+\end{equation}
+where $S(\omega_i)$ is the skew-symmetric matrix and $z_i = P_i^* - P_{li}$ is the distance from the center of mass.
+
+\subsubsection{Energy Terms Decomposition}
+Substituting the velocity into the integral yields three terms:
+\begin{enumerate}
+    \item \textbf{Translation Term:}
+    \begin{equation}
+        \frac{1}{2} \int_{V_{li}} \dot{P}_{li}^T \dot{P}_{li} \rho dV = \frac{1}{2} m_{li} \dot{P}_{li}^T \dot{P}_{li}
+    \end{equation}
+    \item \textbf{Mutual Term:}
+    \begin{equation}
+        2 \left( \frac{1}{2} \int_{V_{li}} \dot{P}_{li}^T S(\omega_i) z_i \rho dV \right) = \dot{P}_{li}^T S(\omega_i) \int_{V_{li}} (P_i^* - P_{li}) \rho dV = 0
+    \end{equation}
+    This term vanishes because the integral of the position relative to the center of mass is zero.
+    \item \textbf{Rotational Term:}
+    To be detailed in the following section, involving the inertia tensor.
+\end{enumerate}
+
+\subsubsection{Rotational Term and Inertia Tensor}
+The rotational component of the kinetic energy for link $i$ is derived from the velocity distribution relative to the center of mass:
+\begin{equation}
+    \frac{1}{2} \int_{V_{li}} z_i^T S^T(\omega_i) S(\omega_i) z_i \rho dV
+\end{equation}
+Using the property $S(\omega_i) z_i = -S(z_i) \omega_i$, we can extract the angular velocity $\omega_i$ from the integral:
+\begin{equation}
+    T_{rot, i} = \frac{1}{2} \omega_i^T \left( \int_{V_{li}} S^T(z_i) S(z_i) \rho dV \right) \omega_i = \frac{1}{2} \omega_i^T I_{li} \omega_i
+\end{equation}
+where $I_{li}$ is the inertia tensor of link $i$ expressed in the base frame. The skew-symmetric matrix $S(a)$ is defined as:
+\begin{equation}
+    S(a) = \begin{bmatrix} 0 & -a_z & a_y \\ a_z & 0 & -a_x \\ -a_y & a_x & 0 \end{bmatrix}
+\end{equation}
+
+\subsection{Frame Transformation for Inertia Tensor}
+Since $I_{li}$ depends on the manipulator's configuration when expressed in the base frame, we use the rotation matrix $R_i$ to express it relative to a constant tensor $\bar{I}_{li}^i$ in the local link frame:
+\begin{equation}
+    I_{li} = R_i \bar{I}_{li}^i R_i^T
+\end{equation}
+The angular velocity in the base frame is $\omega_i = R_i \omega_i^i$. Thus, the kinetic energy of the link is:
+\begin{equation}
+    T_{li} = \frac{1}{2} m_{li} \dot{P}_{li}^T \dot{P}_{li} + \frac{1}{2} \omega_i^T R_i \bar{I}_{li}^i R_i^T \omega_i
+\end{equation}
+
+\subsection{Velocity Representation via Jacobians}
+To express $T_{li}$ as a function of the joint variables $q$ and their derivatives $\dot{q}$, we utilize the geometric Jacobians for linear and angular velocities.
+
+\subsubsection{Linear Velocity Jacobian}
+The velocity of the center of mass of link $i$ is:
+\begin{equation}
+    \dot{P}_{li} = J_P^{(li)} \dot{q} = \sum_{j=1}^{i} j_{Pj}^{(li)} \dot{q}_j
+\end{equation}
+where the columns of the Jacobian are defined based on the joint type:
+\begin{equation}
+    j_{Pj}^{(li)} = \begin{cases} z_{j-1} & \text{if joint } j \text{ is prismatic} \\ z_{j-1} \times (P_{li} - P_{j-1}) & \text{if joint } j \text{ is revolute} \end{cases}
+\end{equation}
+For $j > i$, $j_{Pj}^{(li)} = 0$.
+
+\subsubsection{Angular Velocity Jacobian}
+Similarly, the angular velocity is expressed as:
+\begin{equation}
+    \omega_i = J_O^{(li)} \dot{q} = \sum_{j=1}^{i} j_{Oj}^{(li)} \dot{q}_j
+\end{equation}
+with the columns defined as:
+\begin{equation}
+    j_{Oj}^{(li)} = \begin{cases} 0 & \text{if joint } j \text{ is prismatic} \\ z_{j-1} & \text{if joint } j \text{ is revolute} \end{cases}
+\end{equation}
+
+\subsubsection{Link Kinetic Energy in Joint Space}
+Combining the above, the final expression for the kinetic energy of link $i$ is:
+\begin{equation}
+    T_{li} = \frac{1}{2} \dot{q}^T \left[ m_{li} J_P^{(li)T} J_P^{(li)} + J_O^{(li)T} R_i \bar{I}_{li}^i R_i^T J_O^{(li)} \right] \dot{q}
+\end{equation}
+
+\section{Kinetic Energy of the Motors}
+The motor for joint $i$ is typically mounted on link $i-1$. Its motion depends on the motion of the preceding links plus its own rotation.
+
+\subsection{Motor Velocity Kinematics}
+The angular velocity of the $i$-th motor, $\omega_{mi}$, is:
+\begin{equation}
+    \omega_{mi} = \omega_{i-1} + k_{ri} \dot{q}_i z_{mi}
+\end{equation}
+where $k_{ri}$ is the gear ratio and $z_{mi}$ is the motor's axis of rotation.
+
+\subsection{Total Motor Kinetic Energy}
+The kinetic energy $T_{mi}$ includes translational and rotational terms:
+\begin{equation}
+    T_{mi} = \frac{1}{2} m_{mi} \dot{P}_{mi}^T \dot{P}_{mi} + \frac{1}{2} \omega_{mi}^T I_{mi} \omega_{mi}
+\end{equation}
+Expressing this in terms of the joint space velocities:
+\begin{equation}
+    T_{mi} = \frac{1}{2} \dot{q}^T \left[ m_{mi} J_P^{(mi)T} J_P^{(mi)} + J_O^{(mi)T} R_{mi} \bar{I}_{mi}^m R_{mi}^T J_O^{(mi)} \right] \dot{q}
+\end{equation}
+The motor Jacobian $J_O^{(mi)}$ accounts for the transmission ratio $k_{ri}$ at the $i$-th entry.
+
+\section{Total Kinetic Energy and Inertia Matrix}
+The total kinetic energy of the manipulator is obtained by summing the contributions of all links and motors. It can be expressed in a quadratic form with respect to the joint velocities:
+\begin{equation}
+    T = \frac{1}{2} \sum_{i=1}^{n} \sum_{j=1}^{n} b_{ij}(q) \dot{q}_i \dot{q}_j = \frac{1}{2} \dot{q}^T B(q) \dot{q}
+\end{equation}
+where $B(q)$ is the $(n \times n)$ symmetric and positive definite inertia matrix.
+
+\subsection{Structure of the Inertia Matrix}
+The elements $b_{ij}$ of the inertia matrix $B(q)$ are calculated by summing the translational and rotational components of both links and motors:
+\begin{equation}
+    B(q) = \sum_{i=1}^{n} \left( m_{li} J_P^{(li)T} J_P^{(li)} + J_O^{(li)T} R_i \bar{I}_{li}^i R_i^T J_O^{(li)} + m_{mi} J_P^{(mi)T} J_P^{(mi)} + J_O^{(mi)T} R_{mi} \bar{I}_{mi}^m R_{mi}^T J_O^{(mi)} \right)
+\end{equation}
+
+\section{Potential Energy}
+The total potential energy $U$ is the sum of the potential energies of each link $U_{li}$ and motor $U_{mi}$:
+\begin{equation}
+    U = \sum_{i=1}^{n} (U_{li} + U_{mi})
+\end{equation}
+Assuming a gravity vector $g$ in the base frame:
+\begin{itemize}
+    \item For the link: $U_{li} = -m_{li} g^T P_{li}$ 
+    \item For the motor: $U_{mi} = -m_{mi} g^T P_{mi}$ 
+\end{itemize}
+The total potential energy is a function of the configuration $q$:
+\begin{equation}
+    U(q) = -\sum_{i=1}^{n} (m_{li} g^T P_{li} + m_{mi} g^T P_{mi})
+\end{equation}
+
+\section{Equations of Motion}
+Applying the Lagrange equations to the Lagrangian $L(q, \dot{q}) = T(q, \dot{q}) - U(q)$:
+\begin{equation}
+    \frac{d}{dt} \left( \frac{\partial T}{\partial \dot{q}_i} \right) - \frac{\partial T}{\partial q_i} + \frac{\partial U}{\partial q_i} = \tau_i
+\end{equation}
+
+\subsection{Detailed Derivation}
+Expanding the kinetic energy term:
+\begin{equation}
+    \frac{d}{dt} \left( \frac{\partial T}{\partial \dot{q}_i} \right) = \sum_{j=1}^{n} b_{ij}(q) \ddot{q}_j + \sum_{j=1}^{n} \frac{d b_{ij}}{dt} \dot{q}_j = \sum_{j=1}^{n} b_{ij}(q) \ddot{q}_j + \sum_{j=1}^{n} \sum_{k=1}^{n} \frac{\partial b_{ij}}{\partial q_k} \dot{q}_k \dot{q}_j
+\end{equation}
+The derivative of the kinetic energy with respect to the coordinates is:
+\begin{equation}
+    \frac{\partial T}{\partial q_i} = \frac{1}{2} \sum_{j=1}^{n} \sum_{k=1}^{n} \frac{\partial b_{jk}}{\partial q_i} \dot{q}_j \dot{q}_k
+\end{equation}
+
+Defining $g_i(q) = \frac{\partial U}{\partial q_i}$ as the gravity torque, the equations of motion for each joint $i$ are:
+\begin{equation}
+    \sum_{j=1}^{n} b_{ij}(q) \ddot{q}_j + \sum_{j=1}^{n} \sum_{k=1}^{n} c_{ijk}(q) \dot{q}_j \dot{q}_k + g_i(q) = \tau_i
+\end{equation}
+
+
+\section{Components of the Torques and Non-Conservative Forces}
+The equations of motion for each joint $i$ can be expanded to account for various physical effects:
+\begin{itemize}
+     \item \textbf{Inertia terms:} $b_{ii}(q)$ is the moment of inertia at joint $i$.  $b_{ij}(q)$ represents the effect of the acceleration of joint $j$ on joint $i$.
+     \item \textbf{Coriolis and Centrifugal terms:} $c_{ijj}(q) \dot{q}_j^2$ is the centrifugal effect on joint $i$ by the velocity of joint $j$.  $c_{ijk}(q) \dot{q}_j \dot{q}_k$ is the Coriolis effect on joint $i$ by the velocities of joints $j$ and $k$.
+     \item \textbf{Gravity terms:} $g_i(q)$ is the torque generated at joint $i$ axis by gravity.
+\end{itemize}
+
+\subsection{Non-Conservative Forces}
+The generalized forces $\tau$ include several non-conservative components:
+\begin{itemize}
+     \item \textbf{Actuation torques:} $u$.
+     \item \textbf{Viscous friction torques:} $-F_v \dot{q}$.
+     \item \textbf{Static friction torques:} $-F_s \text{sgn}(\dot{q})$.
+     \item \textbf{Contact forces:} $-J^T(q) h_e$, representing the balancing of contact forces and torques through the Jacobian $J(q)$ and the wrench $h_e$.
+\end{itemize}
+
+The dynamic model in compact form is:
+\begin{equation}
+    B(q) \ddot{q} + C(q, \dot{q}) \dot{q} + F_v \dot{q} + F_s \text{sgn}(\dot{q}) + g(q) = u - J^T(q) h_e
+\end{equation}
+ where $C(q, \dot{q})$ is an $n \times n$ matrix whose elements are $c_{ij} = \sum_{k=1}^n c_{ijk}(q) \dot{q}_k$.
+
+\section{Notable Properties}
+The dynamic model possesses significant properties used in the design of control laws.
+
+\subsection{Skew-Symmetry}
+ The matrix $N(q, \dot{q}) = \dot{B}(q) - 2C(q, \dot{q})$ is skew-symmetric. This means:
+\begin{equation}
+    N(q, \dot{q}) = -N^T(q, \dot{q})
+\end{equation}
+and consequently, for any vector $w$:
+\begin{equation}
+    w^T (\dot{B}(q) - 2C(q, \dot{q})) w = 0
+\end{equation}
+ This property follows from the principle of conservation of energy.  The time derivative of the kinetic energy is balanced by the power generated by the forces on the joints:
+\begin{equation}
+    \frac{1}{2} \frac{d}{dt} (\dot{q}^T B(q) \dot{q}) = \dot{q}^T (u - F_v \dot{q} - F_s \text{sgn}(\dot{q}) - g(q) - J^T(q) h_e)
+\end{equation}
+ Since $\frac{d}{dt} (\dot{q}^T B \dot{q}) = \dot{q}^T B \ddot{q} + \frac{1}{2} \dot{q}^T \dot{B} \dot{q}$, substituting the equations of motion leads to the condition $\dot{q}^T (\dot{B} - 2C) \dot{q} = 0$, which must be skew-symmetrical for any $q, \dot{q}$.
+
+\section{Linearity in the Dynamic Parameters}
+The dynamic model of a robot is linear with respect to a specific set of dynamic parameters. To demonstrate this, a pivot point $P_{p_i}$ is selected for each link:
+\begin{itemize}
+    \item $P_{p_i} = P_{i-1}$ for revolute joints.
+    \item $P_{p_i} = P_i$ for prismatic joints.
+\end{itemize}
+
+Let $P_{c_i}$ be the center of mass of the link. The velocity of the generic point is defined as $v_i = v_{0i} + \omega_i \times z_i$. Defining the distance from the pivot as $r_i = P_{c_i} - P_{p_i}$, we observe that the dynamic parameters do not depend on the choice of the reference frame.
+
+\subsection{Augmented Kinetic Energy and Potential Energy}
+The kinetic energy can be rewritten as a function of the mass $m_i$, the first moment of inertia $m_i r_i$, and the inertia tensor $I_i$. Similarly, the potential energy $V_i$ is expressed as:
+\begin{equation}
+    V_i = -m_i g^T P_{c_i} = -g^T (m_i P_{p_i} + m_i r_i)
+\end{equation}
+This confirms that the potential energy is a linear function of the mass and the first moment of inertia.
+
+\subsection{The Lagrangian and the Parameter Vector}
+The Lagrangian $L = T - U$ is linear with respect to the vector $\pi$. For each link, this vector includes:
+\begin{itemize}
+    \item The mass $m_i$.
+    \item The first moments of inertia: $m_i r_{ix}, m_i r_{iy}, m_i r_{iz}$.
+    \item The six independent components of the inertia tensor.
+\end{itemize}
+
+Under the assumption that the rotors are modeled as uniform bodies with their center of mass on the rotation axis, and that the angular velocity of each rotor is dominated by its own spin, the equations of motion maintain this linearity:
+\begin{equation}
+    \tau = Y(q, \dot{q}, \ddot{q}) \pi
+\end{equation}
+where $Y$ is the regressor matrix. This model is triangular because the torque on a joint does not depend on the parameters of the preceding links.
+
+\section{Dynamics of a 2-Link Planar Manipulator}
+
+\subsection{Kinematic Characterization}
+Considering a planar manipulator with two links, we define the positions of the centers of mass:
+\begin{itemize}
+    \item $P_{l1} = (l_{c1} \cos q_1, l_{c1} \sin q_1)$
+    \item $P_{l2} = (l_1 \cos q_1 + l_{c2} \cos(q_1 + q_2), l_1 \sin q_1 + l_{c2} \sin(q_1 + q_2))$
+\end{itemize}
+
+The position of the motor mass $m_{m2}$ (mounted on link 1) is:
+\begin{itemize}
+    \item $P_{m2} = (l_1 \cos q_1, l_1 \sin q_1)$
+\end{itemize}
+
+\subsection{Jacobian Matrices}
+The geometric Jacobians for the links and the motor are derived as follows:
+
+\subsubsection{Link 1 Jacobians}
+Only $q_1$ contributes to the motion of Link 1:
+\begin{equation}
+    J_P^{(l1)} = \begin{bmatrix} -l_{c1} \sin q_1 & 0 \\ l_{c1} \cos q_1 & 0 \\ 0 & 0 \end{bmatrix}, \quad J_O^{(l1)} = \begin{bmatrix} 0 & 0 \\ 0 & 0 \\ 1 & 0 \end{bmatrix}
+\end{equation}
+
+\subsubsection{Link 2 Jacobians}
+Both $q_1$ and $q_2$ contribute to the rotation and translation of Link 2:
+\begin{equation}
+    J_P^{(l2)} = \begin{bmatrix} -l_1 \sin q_1 - l_{c2} \sin(q_1 + q_2) & -l_{c2} \sin(q_1 + q_2) \\ l_1 \cos q_1 + l_{c2} \cos(q_1 + q_2) & l_{c2} \cos(q_1 + q_2) \\ 0 & 0 \end{bmatrix}, \quad J_O^{(l2)} = \begin{bmatrix} 0 & 0 \\ 0 & 0 \\ 1 & 1 \end{bmatrix}
+\end{equation}
+
+\subsubsection{Motor 2 Jacobians}
+The motor for the second joint is mounted on Link 1:
+\begin{equation}
+    J_P^{(m2)} = \begin{bmatrix} -l_1 \sin q_1 & 0 \\ l_1 \cos q_1 & 0 \\ 0 & 0 \end{bmatrix}, \quad J_O^{(m2)} = \begin{bmatrix} 0 & 0 \\ 0 & 0 \\ 1 & k_{r2} \end{bmatrix}
+\end{equation}
+where $k_{r2}$ is the gear ratio of the second motor.
+
+\subsection{Inertia Matrix $B(q)$}
+The inertia matrix is computed by summing the contributions:
+\begin{equation}
+    B(q) = \sum_{i=1}^{2} \left( m_{li} J_P^{(li)T} J_P^{(li)} + J_O^{(li)T} R_i \bar{I}_{li}^i R_i^T J_O^{(li)} + m_{mi} J_P^{(mi)T} J_P^{(mi)} + J_O^{(mi)T} R_{mi} \bar{I}_{mi}^m R_{mi}^T J_O^{(mi)} \right)
+\end{equation}
+
+The specific elements of $B(q)$ for the 2-link planar robot are:
+\begin{itemize}
+    \item $b_{11} = I_{l1} + m_{l1} l_{c1}^2 + k_{r1}^2 I_m + I_{l2} + m_{l2}(l_1^2 + l_{c2}^2 + 2l_1 l_{c2} \cos q_2) + I_{m2} + m_{m2} l_1^2$
+    \item $b_{12} = b_{21} = I_{l2} + m_{l2}(l_{c2}^2 + l_1 l_{c2} \cos q_2) + k_{r2} I_{m2}$
+    \item $b_{22} = I_{l2} + m_{l2} l_{c2}^2 + k_{r2}^2 I_{m2}$
+\end{itemize}
+
+\section{Identification of Dynamic Parameters}
+Identification of dynamic parameters is a process similar to kinematic calibration, but applied to the inertial and friction properties of the manipulator. This process is essential for high-performance simulation and the implementation of advanced control algorithms.
+
+\subsection{Identification Strategy}
+The procedure relies on the linearity of the dynamic model with respect to the parameter vector $\pi$:
+\begin{equation}
+    \tau = Y(q, \dot{q}, \ddot{q}) \pi
+\end{equation}
+To identify the unknown parameters, the robot is moved along "exciting" trajectories while measuring the following quantities:
+\begin{itemize}
+    \item Joint positions $q$ (typically measured via encoders). 
+    \item Joint velocities $\dot{q}$ and accelerations $\ddot{q}$ (often obtained through numerical differentiation and filtering of position data). 
+    \item Joint torques $\tau$ (measured via torque sensors or estimated from motor currents $u$ using the torque constant $K_t$). 
+\end{itemize}
+
+\subsection{Least-Squares Estimation}
+By collecting $N$ sets of measurements at different time instants, we can construct an overdetermined linear system:
+\begin{equation}
+    \bar{\tau} = \bar{Y} \pi
+\end{equation}
+where $\bar{\tau}$ is the vector of all measured torques ($Nn \times 1$) and $\bar{Y}$ is the global regressor matrix ($Nn \times p$).
+
+The parameter vector $\pi$ is estimated using the Least-Squares technique:
+\begin{equation}
+    \hat{\pi} = (\bar{Y}^T \bar{Y})^{-1} \bar{Y}^T \bar{\tau}
+\end{equation}
+The matrix $(\bar{Y}^T \bar{Y})^{-1} \bar{Y}^T$ is known as the left pseudo-inverse of $\bar{Y}$.
+
+\subsection{Numerical Robustness}
+In practice, the matrix $\bar{Y}^T \bar{Y}$ might be ill-conditioned if the chosen trajectories do not sufficiently excite all the dynamic degrees of freedom. This occurs when the rank of the regressor matrix is lower than the number of parameters ($rank(\bar{Y}) < p$).
+In such cases, the Damped Least Squares (DLS) method is employed to improve numerical stability:
+\begin{equation}
+    \hat{\pi} = (\bar{Y}^T \bar{Y} + \lambda^2 I)^{-1} \bar{Y}^T \bar{\tau}
+\end{equation}
+where $\lambda$ is a damping factor that prevents the inversion of singular or near-singular values.
+
+\section{Trajectory Requirements for Identification}
+The trajectory used for the identification of dynamic parameters must be "rich". This means that during the sampling process, it must ensure the presence of contributions from all dynamic terms so they can be mathematically isolated and identified.
+
+\subsection{Limitations of Simple Trajectories}
+The choice of an inadequate trajectory leads to poor identification results:
+\begin{itemize}
+    \item \textbf{Trapezoidal Velocity Profile:} This type of profile includes segments of constant velocity where acceleration is zero ($\ddot{q} = 0$). This lack of acceleration makes it impossible to identify the inertial terms of the model.
+    \item \textbf{High-Degree Polynomials:} While more complex, increasing the degree of the trajectory polynomial can lead to a decrease in numerical accuracy. Furthermore, high-frequency components might excite the elastic dynamics of the structure, which contradicts the fundamental assumption of link rigidity.
+\end{itemize}
+
+\section{Newton-Euler Formulation}
+
+The Newton-Euler formulation is based on a balance of all the forces acting on the generic link $i$ within a robotic structure. We consider the interaction between adjacent links:
+
+\begin{itemize}
+    \item $f_i$: Force exerted by link $i-1$ on link $i$.
+    \item $-f_{i+1}$: Force exerted by link $i+1$ on link $i$.
+    \item $\mu_i$: Moment exerted by link $i-1$ on link $i$ with respect to the origin of frame $i-1$.
+    \item $-\mu_{i+1}$: Moment exerted by link $i+1$ on link $i$ with respect to the origin of frame $i$.
+\end{itemize}
+
+\subsection{Fundamental Laws of Motion}
+
+To describe the dynamic behavior, we apply Newton's and Euler's laws to each link.
+
+\subsubsection{Newton Law}
+The balance of linear forces is expressed as:
+\begin{equation}
+    f_i - f_{i+1} + m_i g_0 = m_i \ddot{p}_{ci}
+\end{equation}
+where $m_i$ is the mass of the link and $\ddot{p}_{ci}$ is the acceleration of the center of mass.
+
+\subsubsection{Euler Law}
+The balance of moments is given by:
+\begin{equation}
+    \mu_i + f_i \times r_{i-1,c_i} - \mu_{i+1} - f_{i+1} \times r_{i,c_i} = \frac{d}{dt} \left( \bar{I}_i \omega_i + k_{m,i+1} \dot{q}_{i+1} I_{m,i+1} z_{m,i+1} \right)
+\end{equation}
+Assuming $\bar{I}_i$ is constant in the local frame, the derivative of the angular momentum $\frac{d}{dt}(I_i \omega_i)$ can be expanded as:
+\begin{equation}
+    \frac{d}{dt}(I_i \omega_i) = \frac{d}{dt}(R_i \bar{I}_i^i R_i^T \omega_i)
+\end{equation}
+Applying the derivative chain rule and the properties of the skew-symmetric matrix $S(\omega_i)$:
+\begin{equation}
+    = S(\omega_i) R_i \bar{I}_i^i R_i^T \omega_i + R_i \bar{I}_i^i R_i^T \dot{\omega}_i = \bar{I}_i \dot{\omega}_i + \omega_i \times (\bar{I}_i \omega_i)
+\end{equation}
+
+Considering the rotor contribution (where $k_{m,i+1} \dot{q}_{i+1} I_{m,i+1} z_{m,i+1}$ represents the motor's angular momentum), the complete derivative for the moment equation becomes:
+\begin{equation}
+    \frac{d}{dt} ( \dot{q}_{i+1} I_{m,i+1} z_{m,i+1} ) = \ddot{q}_{i+1} I_{m,i+1} z_{m,i+1} + \dot{q}_{i+1} I_{m,i+1} \omega_i \times z_{m,i+1}
+\end{equation}
+
+Resulting in the final moment balance:
+\begin{equation}
+    \mu_i + f_i \times r_{i-1,c_i} - \mu_{i+1} - f_{i+1} \times r_{i,c_i} = \bar{I}_i \dot{\omega}_i + \omega_i \times (\bar{I}_i \omega_i) + k_{m,i+1} \ddot{q}_{i+1} I_{m,i+1} z_{m,i+1} + k_{m,i+1} \dot{q}_{i+1} I_{m,i+1} \omega_i \times z_{m,i+1}
+\end{equation}
+
+\subsection{Joint Generalized Force}
+
+To find the torque (or force) $\tau_i$ applied by the motor at joint $i$, we project the force and moment onto the motion axis $z_{i-1}$.
+
+For a \textbf{Prismatic} joint:
+\begin{equation}
+    \tau_i = f_i^T z_{i-1} + k_{m,i} \ddot{q}_i I_{m,i}
+\end{equation}
+
+For a \textbf{Revolute} joint:
+\begin{equation}
+    \tau_i = \mu_i^T z_{i-1} + k_{m,i} \ddot{q}_i I_{m,i}
+\end{equation}
+
+\subsection{Kinematic Propagation}
+
+To solve the Newton-Euler equations, we first need to compute the velocities and accelerations for each link. The angular velocity is propagated as:
+\begin{equation}
+    \omega_i = \begin{cases} 
+    \omega_{i-1} & \text{Prismatic} \\
+    \omega_{i-1} + \dot{q}_i z_{i-1} & \text{Revolute}
+    \end{cases}
+\end{equation}
+
+The linear velocity of the origin of frame $i$ is:
+\begin{equation}
+    v_i = \begin{cases} 
+    v_{i-1} + \dot{d}_i z_{i-1} + \omega_i \times r_{i-1,i} & \text{Prismatic} \\
+    v_{i-1} + \omega_i \times r_{i-1,i} & \text{Revolute}
+    \end{cases}
+\end{equation}
+
+By differentiating these expressions, we obtain the acceleration of the center of mass and the angular acceleration, which are necessary for the Newton-Euler equations.
+
+\subsection{Recursive Algorithm}
+
+The algorithm is structured in two main passes:
+
+\begin{enumerate}
+    \item \textbf{Forward Recursion}: From the base to the end-effector ($i = 1 \dots n$).
+    Initial conditions: $\omega_0, \dot{\omega}_0, p_0, \dot{p}_0$.
+    Compute: $\omega_i, \dot{\omega}_i, \ddot{p}_i, \ddot{p}_{ci}$.
+    
+    \item \textbf{Backward Recursion}: From the end-effector to the base ($i = n \dots 1$).
+    Knowing the end-effector force $h_e = [f_{n+1}^T \mu_{n+1}^T]^T$, we compute the internal forces $f_i$ and moments $\mu_i$ to finally find $\tau_i$.
+\end{enumerate}
+
+Note: All quantities should be converted into their own local frames so that the inertia tensors $I_i$ remain constant.
+
+
+\section{Comparison: Lagrange vs. Newton-Euler}
+
+The choice between the two main formulations depends on the specific application and the required analytical depth.
+
+\subsection{Lagrange Formulation}
+\begin{itemize}
+    \item It is generally easier to understand and more intuitive for complex systems.
+    \item Provides a compact form of the equations of motion.
+    \item Allows for easy identification of the inertia matrix, centrifugal and Coriolis terms, and gravity components.
+    \item It is particularly suitable when accounting for more complex mechanical effects, such as elastic deformations.
+\end{itemize}
+
+\subsection{Newton-Euler Formulation}
+\begin{itemize}
+    \item It is a recursive method that is computationally very efficient.
+    \item Highly effective for real-time applications and high-degree-of-freedom systems.
+\end{itemize}
+
+\section{Direct and Inverse Dynamics}
+
+The relationship between joint torques and the resulting motion is categorized into two problems.
+
+\subsection{Direct Dynamics}
+In the direct dynamics problem, we determine the joint accelerations $\ddot{q}$ given the applied torques $\tau$ and the current state $(q, \dot{q})$.
+\begin{itemize}
+    \item It requires the inversion of the inertia matrix $B^{-1}$.
+    \item It is primarily useful for simulation purposes, where we want to predict the robot's motion.
+\end{itemize}
+
+\subsection{Inverse Dynamics}
+In the inverse dynamics problem, we calculate the torques $\tau$ required to achieve a desired acceleration $\ddot{q}$, given the current state $(q, \dot{q})$.
+\begin{itemize}
+    \item It is useful for control and trajectory planning.
+    \item Newton-Euler is the preferred method to solve the inverse dynamics efficiently.
+\end{itemize}
+
+\subsection{Computational Complexity}
+If we have $n$ joints, the number of operations required is:
+\begin{itemize}
+    \item $O(n^3)$ for Direct Dynamics (due to matrix inversion).
+    \item $O(n)$ for Inverse Dynamics (due to the recursive nature of Newton-Euler).
+\end{itemize}
+
+\section{Implementation Details}
+
+\subsection{Direct Dynamics with Lagrange}
+The equation of motion can be written as:
+\begin{equation}
+    \ddot{q} = B^{-1}(q)(\tau - \tau')
+\end{equation}
+where $\tau'$ accounts for several components:
+\begin{equation}
+    C'(q, \dot{q}) = C(q, \dot{q})\dot{q} + F_v \dot{q} + f(q) + g(q) + J^T(q)h_e
+\end{equation}
+This includes Coriolis/centrifugal forces, viscous and static friction, gravity, and end-effector forces mapped into torques. 
+Given $q(t_k)$, $\dot{q}(t_k)$, and $\tau(t_k)$, we can find $\ddot{q}(t_k)$ and then use numerical integration methods to find the state at the next time step $q(t_{k+1}), \dot{q}(t_{k+1})$.
+
+\subsection{Using Newton-Euler for Direct Dynamics}
+While Newton-Euler (NE) is designed for inverse dynamics (calculating $\tau$ from $q, \dot{q}, \ddot{q}$), it can be used to build the components needed for direct dynamics.
+
+To compute the inertia matrix $B(q)$ column by column using Newton-Euler:
+\begin{enumerate}
+    \item Set gravity $g_0 = 0$.
+    \item Set velocities $\dot{q} = 0$.
+    \item For each column $i$, set the accelerations such that $\ddot{q}_i = 1$ and $\ddot{q}_j = 0$ for $j \neq i$.
+    \item The resulting torque vector $\tau$ calculated by NE will be the $i$-th column of $B(q)$:
+\end{enumerate}
+\begin{equation}
+    \tau = B(q)\ddot{q} = \begin{bmatrix} b_1 & b_2 & \dots & b_n \end{bmatrix} \begin{bmatrix} \ddot{q}_1 \\ \vdots \\ \ddot{q}_n \end{bmatrix}
+\end{equation}
+
+\section{Dynamic Scaling of Trajectories}
+
+When a planned trajectory requires torques that exceed the physical limits of the motors, we must scale the trajectory in time. We introduce a time warping function $s(t)$, with $t_i \leq t \leq t_f$, such that the new time scale is $\tau = s(t)$.
+
+The relationship between the original trajectory $q(t)$ and the scaled trajectory $\tilde{q}(t)$ is defined as:
+\begin{itemize}
+    \item $\tilde{q}(t) = q(s(t))$
+    \item $\dot{\tilde{q}}(t) = \dot{q}(s(t)) \cdot \dot{s}(t)$
+    \item $\ddot{\tilde{q}}(t) = \ddot{q}(s(t)) \cdot \dot{s}^2(t) + \dot{q}(s(t)) \ddot{s}(t)$
+\end{itemize}
+
+\subsection{Scaling the Dynamic Equation}
+The standard dynamic equation is:
+\begin{equation}
+    \tau(t) = B(q(t))\ddot{q}(t) + C(q(t), \dot{q}(t))\dot{q}(t) + g(q(t))
+\end{equation}
+
+Substituting the scaled expressions into the dynamic model, we obtain the scaled torque $\tilde{\tau}(t)$:
+\begin{equation}
+    \tilde{\tau}(t) = B(q(s))[\ddot{q}(s)\dot{s}^2 + \dot{q}(s)\ddot{s}] + C(q(s), \dot{q}(s)\dot{s})\dot{q}(s)\dot{s} + g(q(s))
+\end{equation}
+
+Using the property that the Coriolis/centrifugal terms are quadratic in the velocities ($C(q, \dot{q}\dot{s}) = \dot{s} C(q, \dot{q})$), we can simplify the expression:
+\begin{equation}
+    \tilde{\tau}(t) = \dot{s}^2 [B(q)\ddot{q} + C(q, \dot{q})\dot{q}] + \ddot{s} B(q)\dot{q} + g(q)
+\end{equation}
+
+Defining $m(s) = B(q)\ddot{q} + C(q, \dot{q})\dot{q}$, the equation becomes:
+\begin{equation}
+    \tilde{\tau}(t) = \dot{s}^2 m(s) + \ddot{s} B(q)\dot{q} + g(q)
+\end{equation}
+
+To maintain the path while respecting torque limits, we typically set $\ddot{s} = 0$ (constant velocity scaling), which leads to:
+\begin{equation}
+    \tilde{\tau}_i(t) = \dot{s}^2 [ \tau_i(s) - g_i(q(s)) ] + g_i(q(s))
+\end{equation}
+From this, we can find the scaling factor $\dot{s}$ for the joint $i$ that has exceeded the limit $\tau_{max,i}$.
+
+\section{Dynamics in Operational Space}
+
+This section describes the relationship between the generalized forces acting on the manipulator and the minimal variables used to describe position and orientation in the operational space.
+
+\subsection{Operational Space Equations}
+The dynamic model in joint space is:
+\begin{equation}
+    B(q)\ddot{q} + C(q, \dot{q})\dot{q} + g(q) = \tau - J^T(q)h_e = J^T \gamma
+\end{equation}
+
+To project this into the operational space, we use the relationship between joint acceleration and operational acceleration $\ddot{x}_e$:
+\begin{equation}
+    \ddot{x}_e = J(q)\ddot{q} + \dot{J}(q, \dot{q})\dot{q}
+\end{equation}
+
+From the joint space dynamics, we solve for $\ddot{q}$:
+\begin{equation}
+    \ddot{q} = B^{-1}(q) [ \tau - C\dot{q} - g - J^T h_e ]
+\end{equation}
+
+Substituting $\ddot{q}$ into the operational acceleration equation:
+\begin{equation}
+    \ddot{x}_e = J B^{-1} \tau - J B^{-1} (C\dot{q} + g) - J B^{-1} J^T h_e + \dot{J}\dot{q}
+\end{equation}
+
+\subsection{Operational Space Inertia and Forces}
+We seek an expression in the form:
+\begin{equation}
+    B_a(q) \ddot{x}_e + C_a(q, \dot{q}) \dot{x}_e + g_a(q) = F_a - h_e
+\end{equation}
+
+By manipulating the terms and using the Analytic Jacobian $J_A$ (if we are in the operational space, we must use $J_A$ instead of $J$), we define the operational space inertia matrix:
+\begin{equation}
+    B_a = (J_A B^{-1} J_A^T)^{-1}
+\end{equation}
+This matrix is invertible if and only if $J_A$ has full rank (i.e., the robot is not in a singular configuration).
+
+The complete projected equation becomes:
+\begin{equation}
+    B_a \ddot{x}_e + B_a(J_A B^{-1} C - \dot{J}_A) \dot{q} + B_a J_A B^{-1} g = F_a - h_e
+\end{equation}
+
+\section{Direct and Inverse Dynamics in Operational Space}
+
+The relationship between forces and motion can also be expressed directly in the operational space, following a logic similar to the joint space.
+
+\subsection{Direct Dynamics}
+In the operational space, the goal is to determine the acceleration of the end-effector $\ddot{x}_e$ given the operational forces $F_a$ and the current state $x, \dot{x}$.
+The solution can be obtained through two steps:
+\begin{enumerate}
+    \item Solve the direct dynamics in the joint space to find $\ddot{q}$.
+    \item Apply direct kinematics to find $\ddot{x}_e$ using the relation $\ddot{x}_e = J\ddot{q} + \dot{J}\dot{q}$.
+\end{enumerate}
+
+\subsection{Inverse Dynamics}
+Given a desired trajectory in the operational space ($x, \dot{x}, \ddot{x}$), we calculate the forces $F_a$ required.
+\begin{equation}
+    F_a - h_e = B_a(q) \ddot{x}_e + C_a(q, \dot{q}) \dot{x}_e + g_a(q)
+\end{equation}
+Alternatively, this can be solved by:
+\begin{enumerate}
+    \item Performing inverse kinematics to find the joint state.
+    \item Solving the inverse dynamics at the joint level.
+\end{enumerate}
+
+\subsection{Relationship between Joint and Operational Torques}
+The relationship between the operational space force $F_a$ and the joint torques $\tau$ is expressed as:
+\begin{equation}
+    \tau = J^T(q) F_a + (I - J^T J^{T\#}) \tau_0
+\end{equation}
+where $J^{T\#}$ is a right pseudo-inverse of $J^T$. The second term represents torques that do not contribute to the end-effector forces (null space), which is relevant for redundant manipulators.
+
+\section{Dynamic Manipulability Ellipsoid}
+
+The dynamic manipulability ellipsoid represents the ability of the robot to accelerate the end-effector in different directions of the operational space, considering the joint torque limits.
+
+Assuming the joint torques are normalized such that $\|\tau\| \leq 1$, and considering a static condition ($\dot{q} = 0$) and neglecting gravity ($g = 0$):
+\begin{equation}
+    \tau = B(q) \ddot{q}
+\end{equation}
+
+Given the relation $\ddot{x}_e = J \ddot{q}$ (for $\dot{q} = 0$), we have $\ddot{q} = J^{\#} \ddot{x}_e$. Substituting this into the torque equation:
+\begin{equation}
+    \tau = B J^{\#} \ddot{x}_e
+\end{equation}
+
+The unit sphere in the torque space $\tau^T \tau \leq 1$ maps to an ellipsoid in the acceleration space:
+\begin{equation}
+    \ddot{x}_e^T (B J^{\#})^T (B J^{\#}) \ddot{x}_e \leq 1
+\end{equation}
+
+\subsection{Inclusion of Gravity}
+When gravity is included, the ellipsoid undergoes a translation. The mapping becomes:
+\begin{equation}
+    \tau = B J^{\#} (\ddot{x}_e + J B^{-1} g)
+\end{equation}
+The vector $-J B^{-1} g$ describes the contribution of gravity to the operational acceleration. As observed in the diagrams, this translation indicates that it is generally easier for the manipulator to accelerate downwards (in the direction of gravity) than upwards, as the motor torques are partially aided or hindered by the gravitational field.

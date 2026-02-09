@@ -1,0 +1,199 @@
+\chapter{Control Architecture}
+
+\section{Control Architecture}
+
+The control architecture is considered the brain of the robot. It is organised in multiple levels, where each level consists of three fundamental modules:
+
+\begin{enumerate}
+    \item \textbf{Sensor Module}: Reads data from sensors in order to know the state of the robot and the environment.
+    \item \textbf{Model Module}: Contains the model and the knowledge of the robot and the environment.
+    \item \textbf{Decision Module}: It translates high-level tasks into simple actions and manages temporal sequences.
+\end{enumerate}
+
+\section{Control Levels}
+
+The hierarchy of robot control is divided into functional levels that increase in specificity:
+
+\begin{enumerate}
+    \item \textbf{Task Level}: The user tells the robot what to do; the robot translates the task into specific actions.
+    \item \textbf{Action Level}: The actions are translated into a series of configurations. This level also decides the workspace.
+    \item \textbf{Primitives Level}: It computes the feasible trajectory and defines the control strategy.
+    \item \textbf{Servo Level}: It translates the trajectory into signals for the joint motion.
+\end{enumerate}
+
+\section{Hardware Components}
+
+The physical implementation of the control architecture relies on dedicated boards:
+
+\begin{itemize}
+    \item \textbf{System Board}: Contains the microprocessor, math coprocessor, RAM, ROM, I/O, and counters.
+    \item \textbf{Kinematic Board}: It calculates direct and inverse kinematics and handles singularities.
+    \item \textbf{Dynamic Board}: Dedicated to dynamic model computations.
+    \item \textbf{Servo Board}: It handles the servo motors, Digital-to-Analog Converters (DAC), amplifiers, and sensors.
+    \item \textbf{Force Board}: It reads and processes data from force sensors.
+    \item \textbf{Vision Board}: Analyzes images from the camera and extracts relevant information.
+\end{itemize}
+
+\section{Control Motion in Joint Space}
+
+To achieve precise motion, we utilize Joint Space Control. Given a desired trajectory $x_d$, the inverse kinematics (Inv. Kin.) provides the reference for the controller.
+
+\subsection{Dynamic Model}
+
+The dynamic behavior of the manipulator is described by the following equation:
+\begin{equation}
+    B(q)\ddot{q} + C(q, \dot{q})\dot{q} + F_v\dot{q} + g(q) = \tau
+\end{equation}
+The objective of the control design is to determine $\tau$ so that the actual joint positions track the desired ones: $q(t) = q_d(t)$.
+
+\subsection{Transmissions and Drives}
+
+The relationship between joint variables ($q, \tau$) and motor variables ($q_m, \tau_m$) is governed by the transmission ratio $K_r$:
+\begin{equation}
+    K_r q = q_m \implies \tau_m = K_r^{-1} \tau
+\end{equation}
+
+The electrical drive system (neglecting inductance) is modeled as:
+\begin{equation}
+    v_a = R_a i_a + K_v \dot{q}_m
+\end{equation}
+Where the armature voltage $v_a$ is related to the control signal $V_c$ by the amplifier gain $G_v$:
+\begin{equation}
+    v_a = G_v V_c
+\end{equation}
+
+\subsection{Control Signal Derivation}
+
+Combining the above, the torque generated is:
+\begin{equation}
+    \tau = K_r K_t i_a = K_r K_t R_a^{-1} v_a - K_r K_t R_a^{-1} K_v \dot{q}_m
+\end{equation}
+Substituting the amplifier gain:
+\begin{equation}
+    \tau = K_r K_t R_a^{-1} G_v V_c - K_r K_t R_a^{-1} K_v \dot{q}_m
+\end{equation}
+
+\section{Velocity Controlled Systems}
+
+The dynamic equation of the manipulator can be rewritten considering the system is velocity controlled:
+\begin{equation}
+    B(q)\ddot{q} + C(q,\dot{q})\dot{q} + F\dot{q} + g(q) = \mu
+\end{equation}
+Where the total friction term $F$ and the control input $\mu$ are defined as:
+\begin{itemize}
+    \item $F = F_v + K_r K_t R_a^{-1} K_v K_r$
+    \item $\mu = K_r K_t R_a^{-1} G_v V_c$
+\end{itemize}
+
+\subsection{Design Assumptions for Voltage Control}
+
+To simplify the control design, we impose the following assumptions:
+\begin{enumerate}
+    \item $K_r$ elements are much greater than 1 ($K_r \gg 1$).
+    \item $R_a$ elements are very small.
+    \item The terms are not too large.
+\end{enumerate}
+
+Under these conditions, we can assume that $G_v V_c \approx K_v K_r \dot{q}$. This leads to the definition of the control voltage:
+\begin{equation}
+    V_c = G_v^{-1} K_v K_r \dot{q}
+\end{equation}
+In this configuration, the system is diagonal, meaning the joint velocity depends only on the applied voltage.
+
+\section{Control Architectures: Decentralised vs Centralised}
+
+\subsection{Decentralised Control}
+In a decentralised scheme, each joint is controlled independently. This is typical in commercial robots like Kuka. However, we must accurately know parameters such as $K_t$, $R_a$, and $K_v$. Since these are physical parameters, they can vary over time or due to operating conditions.
+
+\subsection{Centralised Control}
+To overcome the limitations of parameter variation, we can use a current feedback loop:
+\begin{equation}
+    i_a = G_c V_c
+\end{equation}
+In this case, the torque is directly proportional to the control effort:
+\begin{equation}
+    \tau = \mu = K_r K_t i_a
+\end{equation}
+
+\section{Current and Torque Control Design}
+
+\subsection{Decentralised Approach and Disturbance Analysis}
+
+We design $V_c$ to be proportional to $\tau$. Starting from the joint level dynamic equation:
+\begin{equation}
+    B(q)\ddot{q} + C(q,\dot{q})\dot{q} + F_v(q)\dot{q} + g(q) = \tau
+\end{equation}
+
+We transform the equation in terms of motor quantities using the relation $\dot{q} \rightarrow K_r^{-1} \dot{q}_m$:
+\begin{equation}
+    K_r^{-1} B K_r^{-1} \ddot{q}_m + K_r^{-1} C K_r^{-1} \dot{q}_m + K_r^{-1} F_v K_r^{-1} \dot{q}_m + K_r^{-1} g = K_r^{-1} \tau = \tau_m
+\end{equation}
+
+By splitting the inertia matrix into a constant diagonal part and a configuration-dependent part $B(q) = \bar{B} + \Delta B(q)$, we can rewrite the system as linear and decoupled:
+\begin{equation}
+    K_r^{-1} \bar{B} K_r^{-1} \ddot{q}_m + F_m \dot{q}_m + d = \tau_m
+\end{equation}
+
+Where $d$ represents the disturbance term:
+\begin{equation}
+    d = K_r^{-1} \Delta B(q) K_r^{-1} \ddot{q}_m + K_r^{-1} C(q, \dot{q}) K_r^{-1} \dot{q}_m + K_r^{-1} g(q)
+\end{equation}
+
+The goal is to design the controller so that it effectively rejects this disturbance $d$. It is important to notice that the term $1/K_r^2$ is very small, which helps in reducing the coupling effects.
+
+\section{Independent Joint Control}
+
+In this approach, the manipulator is treated as $n$ independent systems, where the coupling effects and gravity are considered as a disturbance $d$. The objective is to reduce the effect of $d$ on the motor position $q_m$.
+
+To achieve this, the control system requires:
+\begin{itemize}
+    \item A large amplifier gain before the disturbance to suppress its influence.
+    \item An integral action to remove the steady-state effect of gravity.
+\end{itemize}
+
+\subsection{Controller Structure}
+
+The chosen controller $C(s)$ is typically a PI (Proportional-Integral) or PID. A purely integral controller would be too slow. The transfer function is:
+\begin{equation}
+    C(s) = K_p \frac{1 + s T_i}{s T_i}
+\end{equation}
+
+\subsection{System Transfer Function}
+
+We define the forward part of the transfer function. Considering the motor dynamics $M(s)$, we want to relate the control voltage to the output.
+\begin{itemize}
+    \item $M(s) = \frac{1}{I s + F}$ (where $I$ is the inertia and $F$ is friction).
+    \item The electrical relation is $V = i R_a$ (neglecting inductance).
+\end{itemize}
+
+The open-loop transfer function $C(s)M(s)$ is:
+\begin{equation}
+    C(s)M(s) = \frac{K_p (1 + s T_i)}{s T_i} \cdot \frac{A}{1 + s T_m}
+\end{equation}
+Where we need to design $K_p$ and $T_i$ to ensure stability and performance.
+
+\section{Root Locus Analysis}
+
+To evaluate the stability and transient response, we analyze the Root Locus of the system. We consider the poles and zeros of the transfer function:
+\begin{itemize}
+    \item Poles at $s = 0$ (from the integrator) and $s = -1/T_m$ (from the motor).
+    \item Zero at $s = -1/T_i$.
+\end{itemize}
+
+\subsection{Case 1: $T_i < T_m$}
+If $T_i$ is smaller than $T_m$, the zero is further to the left than the motor pole. This configuration is generally avoided because the branches of the root locus can move toward the right half-plane, degrading stability.
+
+\subsection{Case 2: $T_i > T_m$}
+This is the preferred configuration. By placing the zero closer to the origin than the motor pole, the root locus stays in the left half-plane, ensuring better damping and stability margins.
+
+\section{Closed-Loop Transfer Function}
+
+The final closed-loop transfer function for the motor position, including the feedback gains, can be expressed as:
+\begin{equation}
+    \frac{q_m}{q_{m,d}} = \frac{s T_i + 1}{s^2 T_i (\dots) + s T_i (\dots) + 1}
+\end{equation}
+
+In more compact terms, it can be approximated or expressed in the standard second-order form:
+\begin{equation}
+    W(s) = \frac{1 + s T_i}{1 + s T_i + s^2 \frac{T_i}{K}}
+\end{equation}

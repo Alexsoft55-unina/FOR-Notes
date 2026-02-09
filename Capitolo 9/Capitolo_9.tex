@@ -1,0 +1,27 @@
+\chapter{Kinematics}
+\section{Kinematics}
+
+\subsection{Position Representation}
+The position of the origin of a mobile coordinate frame $O'$ with respect to a fixed reference frame $O$ is defined by the vector:
+\begin{equation}
+\underline{O}' = o_{x}' \underline{x} + o_{y}' \underline{y} + o_{z}' \underline{z} = \begin{bmatrix} o_{x}' \\ o_{y}' \\ o_{z}' \end{bmatrix}
+\end{equation}
+
+\subsection{Orientation Representation}
+The orientation is described by the unit vectors (versors) of the mobile frame axes projected onto the axes of the fixed frame:
+\begin{equation}
+\underline{x}' = x_{x}' \underline{x} + x_{y}' \underline{y} + x_{z}' \underline{z}
+\end{equation}
+
+The rotation matrix $R$ is constructed from these column vectors:
+\begin{equation}
+R = \begin{bmatrix} \underline{x}' & \underline{y}' & \underline{z}' \end{bmatrix} = \begin{bmatrix} 
+x_{x}' & y_{x}' & z_{x}' \\ 
+x_{y}' & y_{y}' & z_{y}' \\ 
+x_{z}' & y_{z}' & z_{z}' 
+\end{bmatrix} = \begin{bmatrix} 
+\underline{x}'^T \underline{x} & \underline{y}'^T \underline{x} & \underline{z}'^T \underline{x} \\ 
+\underline{x}'^T \underline{y} & \underline{y}'^T \underline{y} & \underline{z}'^T \underline{y} \\ 
+\underline{x}'^T \underline{z} & \underline{y}'^T \underline{z} & \underline{z}'^T \underline{z} 
+\end{bmatrix}
+\end{equation}

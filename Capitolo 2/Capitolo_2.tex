@@ -1,0 +1,1162 @@
+\chapter{Kinematics}
+\section{Kinematics}
+
+\subsection{Position Representation}
+The position of the origin of a mobile coordinate frame $O'$ with respect to a fixed reference frame $O$ is defined by the vector:
+\begin{equation}
+\underline{O}' = o_{x}' \underline{x} + o_{y}' \underline{y} + o_{z}' \underline{z} = \begin{bmatrix} o_{x}' \\ o_{y}' \\ o_{z}' \end{bmatrix}
+\end{equation}
+
+\subsection{Orientation Representation}
+The orientation is described by the unit vectors (versors) of the mobile frame axes projected onto the axes of the fixed frame:
+\begin{equation}
+\underline{x}' = x_{x}' \underline{x} + x_{y}' \underline{y} + x_{z}' \underline{z}
+\end{equation}
+
+The rotation matrix $R$ is constructed from these column vectors:
+\begin{equation}
+R = \begin{bmatrix} \underline{x}' & \underline{y}' & \underline{z}' \end{bmatrix} = \begin{bmatrix} 
+x_{x}' & y_{x}' & z_{x}' \\ 
+x_{y}' & y_{y}' & z_{y}' \\ 
+x_{z}' & y_{z}' & z_{z}' 
+\end{bmatrix} = \begin{bmatrix} 
+\underline{x}'^T \underline{x} & \underline{y}'^T \underline{x} & \underline{z}'^T \underline{x} \\ 
+\underline{x}'^T \underline{y} & \underline{y}'^T \underline{y} & \underline{z}'^T \underline{y} \\ 
+\underline{x}'^T \underline{z} & \underline{y}'^T \underline{z} & \underline{z}'^T \underline{z} 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Properties of the Rotation Matrix $SO(m)$}
+For a matrix to belong to the Special Orthonormal group $SO(m)$, it must satisfy the following mathematical constraints:
+
+\begin{itemize}
+    \item \textbf{Orthonormality:} The basis vectors must be unit length and mutually orthogonal:
+    \begin{equation}
+    \underline{x}'^T \underline{y}' = 0, \quad \underline{x}'^T \underline{x}' = 1
+    \end{equation}
+    \item \textbf{Inverse and Transpose:} For orthogonal matrices, the inverse is equivalent to the transpose:
+    \begin{equation}
+    R^T R = I \implies R^T = R^{-1}
+    \end{equation}
+    \item \textbf{Right-Handed Convention:} The determinant of the matrix must be positive unity to preserve the orientation of the space:
+    \begin{equation}
+    \det(R) = 1
+    \end{equation}
+\end{itemize}
+
+\textit{Note: The dot product between two vectors is defined as:
+\begin{equation}
+x' \cdot x = x'^T x
+\end{equation}
+}
+\section{Elementary Rotation Matrices}
+
+Elementary rotations are transformations where the rotation occurs around one of the principal axes of the reference frame. These matrices belong to the $SO(3)$ group.
+
+\subsection{Rotation about the $z$-axis}
+A rotation by an angle $\alpha$ around the $z$-axis is described by:
+\begin{equation}
+R_{z}(\alpha) = \begin{bmatrix} 
+\cos\alpha & -\sin\alpha & 0 \\ 
+\sin\alpha & \cos\alpha & 0 \\ 
+0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Rotation about the $y$-axis}
+A rotation by an angle $\beta$ around the $y$-axis is described by:
+\begin{equation}
+R_{y}(\beta) = \begin{bmatrix} 
+\cos\beta & 0 & \sin\beta \\ 
+0 & 1 & 0 \\ 
+-\sin\beta & 0 & \cos\beta 
+\end{bmatrix}
+\end{equation}
+\textit{Note: The signs of the sine terms are swapped compared to $R_z$ and $R_x$ to maintain the right-handed convention.}
+
+\subsection{Rotation about the $x$-axis}
+A rotation by an angle $\gamma$ around the $x$-axis is described by:
+\begin{equation}
+R_{x}(\gamma) = \begin{bmatrix} 
+1 & 0 & 0 \\ 
+0 & \cos\gamma & -\sin\gamma \\ 
+0 & \sin\gamma & \cos\gamma 
+\end{bmatrix}
+\end{equation}
+
+\subsection{General Properties}
+For any elementary rotation matrix $R(\theta)$:
+\begin{itemize}
+    \item $R(0) = I$ (Identity matrix)
+    \item $R(-\theta) = R(\theta)^T = R(\theta)^{-1}$
+\end{itemize}
+
+\section{Applications of the Rotation Matrix}
+
+The rotation matrix $R$ serves two primary mathematical purposes in robotics: rotating a vector within the same frame or transforming the coordinates of a point between two different frames.
+
+\subsection{Rotation of a Vector}
+A rotation matrix can be used as an operator to rotate a vector $\underline{p}$ by a certain amount within a fixed reference frame, resulting in a new vector $\underline{p}'$:
+\begin{equation}
+\underline{p}' = R \underline{p}
+\end{equation}
+In this case, both $\underline{p}$ and $\underline{p}'$ are expressed in the same coordinate system.
+
+\subsection{Change of Reference Frame (Coordinate Transformation)}
+When considering a point $P$ in space and two frames, $0$ (fixed) and $1$ (mobile), the matrix $R_1^0$ maps the coordinates of $P$ relative to frame 1 ($\underline{p}^1$) to its coordinates relative to frame 0 ($\underline{p}^0$):
+\begin{equation}
+\underline{p}^0 = R_1^0 \underline{p}^1
+\end{equation}
+
+\subsection{Inverse Transformation}
+To perform the inverse mapping (from the fixed frame back to the mobile frame), we use the property $R^{-1} = R^T$:
+\begin{equation}
+\underline{p}^1 = (R_1^0)^{-1} \underline{p}^0 = (R_1^0)^T \underline{p}^0
+\end{equation}
+
+\subsection{Mapping of Vectors}
+If we have a vector $\underline{v}$ expressed in the mobile frame as $\underline{v} = v_x' \underline{x}' + v_y' \underline{y}' + v_z' \underline{z}'$, its representation in the fixed frame is:
+\begin{equation}
+\underline{v} = \begin{bmatrix} \underline{x}' & \underline{y}' & \underline{z}' \end{bmatrix} \begin{bmatrix} v_x' \\ v_y' \\ v_z' \end{bmatrix} = R \underline{v}'
+\end{equation}
+
+\section{Composition of Rotations}
+
+To obtain the final orientation of a body after multiple rotations, we multiply the individual rotation matrices. The order of multiplication depends on the reference frame.
+
+\subsection{Rules for Composition}
+\begin{itemize}
+    \item \textbf{Fixed Frame (Current is stationary):} If the rotation is performed with respect to the fixed (global) frame, we \textbf{pre-multiply} the existing matrix:
+    \begin{equation}
+    R_{final} = R_{new} \cdot R_{previous}
+    \end{equation}
+    \item \textbf{Current Frame (Relative):} If the rotation is performed with respect to the current (local) moving frame, we \textbf{post-multiply}:
+    \begin{equation}
+    R_{final} = R_{previous} \cdot R_{new}
+    \end{equation}
+\end{itemize}
+
+\section{Euler Angles}
+
+\subsection{Definition}
+Euler angles are a set of three independent parameters $(\phi, \theta, \psi)$ used to describe any orientation of a rigid body in a 3D Euclidean space. According to Euler's rotation theorem, any rotation can be represented as a sequence of three elementary rotations around the axes of a coordinate system.
+
+\subsection{Combinations and Sequences}
+There are a total of \textbf{12 possible combinations} of elementary rotations. These are divided into two categories:
+\begin{itemize}
+    \item \textbf{Proper Euler Angles (Classic):} The first and third rotations are about the same axis (e.g., ZYZ, ZXZ, XYX, XZX, YXY, YZY). There are 6 such sequences.
+    \item \textbf{Tait-Bryan Angles:} Rotations are about three distinct axes (e.g., XYZ, ZYX, XZY, YXZ, YZX, ZXY). These are often called Roll-Pitch-Yaw angles. There are 6 such sequences.
+\end{itemize}
+
+\subsection{Useful Sequences in Robotics}
+The most relevant sequences in robotics and aerospace are:
+\begin{itemize}
+    \item \textbf{ZYZ:} Widely used in the description of spherical wrists in industrial manipulators.
+    \item \textbf{ZYX (Roll-Pitch-Yaw):} Standard in aerospace and mobile robotics to describe the orientation of vehicles.
+\end{itemize}
+
+\subsection{ZYZ Convention: Rotation Sequence}
+The total rotation is obtained by three consecutive rotations relative to the \textbf{current} frames:
+\begin{enumerate}
+    \item Rotate about the $z$-axis by $\phi$
+    \item Rotate about the current $y'$-axis by $\theta$
+    \item Rotate about the current $z''$-axis by $\psi$
+\end{enumerate}
+
+\begin{equation}
+R(\phi, \theta, \psi) = R_{z}(\phi) R_{y}(\theta) R_{z}(\psi)
+\end{equation}
+
+\subsection{Resulting Matrix}
+The symbolic multiplication yields:
+\begin{equation}
+R_{ZYZ} = \begin{bmatrix} 
+c_{\phi}c_{\theta}c_{\psi} - s_{\phi}s_{\psi} & -c_{\phi}c_{\theta}s_{\psi} - s_{\phi}c_{\psi} & c_{\phi}s_{\theta} \\ 
+s_{\phi}c_{\theta}c_{\psi} + c_{\phi}s_{\psi} & -s_{\phi}c_{\theta}s_{\psi} + c_{\phi}c_{\psi} & s_{\phi}s_{\theta} \\ 
+-s_{\theta}c_{\psi} & s_{\theta}s_{\psi} & c_{\theta} 
+\end{bmatrix}
+\end{equation}
+\textit{Note: $c_{x} = \cos(x)$ and $s_{x} = \sin(x)$.}
+
+\subsection{Inverse Problem: Analytical Derivation}
+To find the angles $(\phi, \theta, \psi)$ that correspond to a given numerical rotation matrix $R$, we compare the elements of $R$ with the symbolic matrix $R_{ZYZ}$:
+\begin{equation}
+R = \begin{bmatrix} 
+r_{11} & r_{12} & r_{13} \\ 
+r_{21} & r_{22} & r_{23} \\ 
+r_{31} & r_{32} & r_{33} 
+\end{bmatrix} = 
+\begin{bmatrix} 
+c_{\phi}c_{\theta}c_{\psi} - s_{\phi}s_{\psi} & -c_{\phi}c_{\theta}s_{\psi} - s_{\phi}c_{\psi} & c_{\phi}s_{\theta} \\ 
+s_{\phi}c_{\theta}c_{\psi} + c_{\phi}s_{\psi} & -s_{\phi}c_{\theta}s_{\psi} + c_{\phi}c_{\psi} & s_{\phi}s_{\theta} \\ 
+-s_{\theta}c_{\psi} & s_{\theta}s_{\psi} & c_{\theta} 
+\end{bmatrix}
+\end{equation}
+
+\paragraph{Step 1: Finding $\theta$}
+From the element $r_{33}$, we have:
+\begin{equation}
+r_{33} = \cos\theta
+\end{equation}
+From the elements $r_{13}$ and $r_{23}$, we can write:
+\begin{equation}
+r_{13}^2 + r_{23}^2 = (c_{\phi}s_{\theta})^2 + (s_{\phi}s_{\theta})^2 = s_{\theta}^2 (c_{\phi}^2 + s_{\phi}^2) = \sin^2\theta
+\end{equation}
+Therefore:
+\begin{equation}
+\sin\theta = \pm \sqrt{r_{13}^2 + r_{23}^2}
+\end{equation}
+By choosing the positive root (consistent with the convention $\theta \in [0, \pi]$), we obtain:
+\begin{equation}
+\theta = \text{atan2}\left(\sqrt{r_{13}^2 + r_{23}^2}, r_{33}\right)
+\end{equation}
+
+\paragraph{Step 2: Finding $\phi$}
+Using the elements $r_{13}$ and $r_{23}$ again:
+\begin{align}
+r_{13} &= \cos\phi \sin\theta \\
+r_{23} &= \sin\phi \sin\theta
+\end{align}
+Assuming $\sin\theta \neq 0$, we can solve for $\phi$:
+\begin{equation}
+\phi = \text{atan2}(r_{23}, r_{13})
+\end{equation}
+
+\paragraph{Step 3: Finding $\psi$}
+Finally, using the elements $r_{31}$ and $r_{32}$:
+\begin{align}
+r_{31} &= -\sin\theta \cos\psi \\
+r_{32} &= \sin\theta \sin\psi
+\end{align}
+Again, assuming $\sin\theta \neq 0$:
+\begin{equation}
+\psi = \text{atan2}(r_{32}, -r_{31})
+\end{equation}
+
+\paragraph{Degenerate Case (Singularity)}
+If $\sin\theta = 0$ (i.e., $r_{13} = r_{23} = 0$), the orientation is in a singularity called \textit{Gimbal Lock}. In this case, $\theta = 0$ or $\theta = \pi$, and only the sum or difference of $\phi$ and $\psi$ can be identified from the matrix.
+
+\subsection{Numerical Implementation: atan2 vs. atan}
+In the inverse kinematic derivation, the function $\text{atan2}(y, x)$ is used instead of the standard $\arctan(y/x)$ for several critical analytical reasons:
+
+\begin{itemize}
+    \item \textbf{Quadrant Identification:} The standard $\arctan$ function has a range of $(-\pi/2, \pi/2)$, meaning it cannot distinguish between opposite quadrants (e.g., $I$ vs $III$ or $II$ vs $IV$). $\text{atan2}(y, x)$ uses the signs of both arguments to identify the correct quadrant within $(-\pi, \pi]$.
+    \item \textbf{Handling Vertical Slopes:} When $x = 0$, the ratio $y/x$ is undefined, causing a division-by-zero error in a standard calculator. $\text{atan2}$ handles this case internally, returning $\pm \pi/2$ based on the sign of $y$.
+    \item \textbf{Numerical Stability:} In robotic control, where angles are extracted in real-time, $\text{atan2}$ provides the necessary robustness to avoid jumps in the calculated joint positions when the denominator is near zero.
+\end{itemize}
+
+\section{Angle and Axis (3-Axis) Representation}
+
+To address the degeneracies of Euler angles, an orientation can be described by a rotation of an angle $\theta$ around a generic axis in space defined by the unit vector $\underline{r} = [r_x, r_y, r_z]^T$, where $r_x^2 + r_y^2 + r_z^2 = 1$.
+
+\subsection{Geometric Derivation}
+The rotation matrix $R(\theta, \underline{r})$ is derived by aligning the arbitrary axis $\underline{r}$ with the reference $z$-axis through two rotations ($\alpha$ and $\beta$), performing the rotation $\theta$, and reversing the alignment:
+\begin{equation}
+R(\theta, \underline{r}) = R_z(\alpha) R_y(\beta) R_z(\theta) R_y(-\beta) R_z(-\alpha)
+\end{equation}
+
+The alignment angles are calculated as follows:
+\begin{align}
+\sin\alpha &= \frac{r_y}{\sqrt{r_x^2 + r_y^2}}, \quad \cos\alpha = \frac{r_x}{\sqrt{r_x^2 + r_y^2}} \\
+\sin\beta &= \sqrt{r_x^2 + r_y^2}, \quad \cos\beta = r_z
+\end{align}
+
+\subsection{Inverse Problem: Extracting Angle and Axis}
+Given a rotation matrix $R$, the parameters $\theta$ and $\underline{r}$ are determined by:
+\begin{align}
+\theta &= \arccos\left(\frac{r_{11} + r_{22} + r_{33} - 1}{2}\right) \\
+\underline{r} &= \frac{1}{2\sin\theta} \begin{bmatrix} r_{32} - r_{23} \\ r_{13} - r_{31} \\ r_{21} - r_{12} \end{bmatrix}
+\end{align}
+\textit{Note: As indicated in the notes, for $\theta = 0$ or $\theta = \pi$ there are no physical singularities in the representation, although the specific formula for $\underline{r}$ above is not well-defined at these points (division by zero).}
+
+\section{Unit Quaternions (Euler Parameters)}
+
+Since the Axis-Angle representation still requires 4 parameters ($\theta$ and the 3 components of $\underline{r}$) and suffers from numerical issues when $\sin\theta=0$, we transition to \textbf{Unit Quaternions}. This representation is more robust and numerically stable.
+
+\subsection{Definition and Relation to Axis-Angle}
+A quaternion $\boldsymbol{q} = \{\eta, \underline{\epsilon}\}$ consists of a scalar part $\eta$ and a vector part $\underline{\epsilon} = [\epsilon_x, \epsilon_y, \epsilon_z]^T$:
+\begin{align}
+\eta &= \cos\left(\frac{\theta}{2}\right) \quad \text{(Scalar part)} \\
+\underline{\epsilon} &= \sin\left(\frac{\theta}{2}\right) \underline{r} \quad \text{(Vector part)}
+\end{align}
+The unit norm constraint must be satisfied:
+\begin{equation}
+\eta^2 + \epsilon_x^2 + \epsilon_y^2 + \epsilon_z^2 = 1
+\end{equation}
+
+\subsection{Properties}
+\begin{itemize}
+    \item \textbf{Identity:} The quaternion $\boldsymbol{q} = \{1, [0, 0, 0]^T\}$ represents zero rotation (Identity matrix).
+    \item \textbf{Antipodal Map:} Both $\boldsymbol{q}$ and $-\boldsymbol{q}$ represent the same rotation matrix $R$. This is because a rotation of $\theta$ about $\underline{r}$ is identical to a rotation of $-\theta$ about $-\underline{r}$.
+\end{itemize}
+
+\subsection{Inverse Problem: Detailed Derivation}
+The extraction of the quaternion parameters is performed by comparing the elements of the numerical rotation matrix $R$ with the symbolic matrix $R(\eta, \underline{\epsilon})$.
+
+\paragraph{Derivation of the Scalar Part $\eta$}
+The derivation starts by analyzing the sum of the diagonal elements of the rotation matrix (the trace). Using the symbolic form $r_{ii} = 2(\eta^2 + \epsilon_i^2) - 1$:
+\begin{align}
+r_{11} + r_{22} + r_{33} &= [2(\eta^2 + \epsilon_x^2) - 1] + [2(\eta^2 + \epsilon_y^2) - 1] + [2(\eta^2 + \epsilon_z^2) - 1] \\
+&= 6\eta^2 + 2\epsilon_x^2 + 2\epsilon_y^2 + 2\epsilon_z^2 - 3 
+\end{align}
+By rearranging the terms to exploit the unit norm constraint $(\eta^2 + \epsilon_x^2 + \epsilon_y^2 + \epsilon_z^2) = 1$:
+\begin{align}
+r_{11} + r_{22} + r_{33} &= 2(\eta^2 + \epsilon_x^2 + \epsilon_y^2 + \epsilon_z^2) + 4\eta^2 - 3 \\
+&= 2(1) + 4\eta^2 - 3 \\
+&= 4\eta^2 - 1
+\end{align}
+Solving for $\eta$:
+\begin{equation}
+\eta = \frac{1}{2} \sqrt{r_{11} + r_{22} + r_{33} + 1}
+\end{equation}
+
+\paragraph{Derivation of the Vector Part $\underline{\epsilon}$}
+The components of the vector part $\underline{\epsilon}$ are obtained by subtracting the off-diagonal symmetric elements of $R$:
+\begin{align}
+r_{32} - r_{23} &= (2\epsilon_y\epsilon_z + 2\eta\epsilon_x) - (2\epsilon_y\epsilon_z - 2\eta\epsilon_x) = 4\eta\epsilon_x \\
+r_{13} - r_{31} &= (2\epsilon_x\epsilon_z + 2\eta\epsilon_y) - (2\epsilon_x\epsilon_z - 2\eta\epsilon_y) = 4\eta\epsilon_y \\
+r_{21} - r_{12} &= (2\epsilon_x\epsilon_y + 2\eta\epsilon_z) - (2\epsilon_x\epsilon_y - 2\eta\epsilon_z) = 4\eta\epsilon_z
+\end{align}
+Which yields the extraction formulas:
+\begin{equation}
+\epsilon_x = \frac{r_{32} - r_{23}}{4\eta}, \quad \epsilon_y = \frac{r_{13} - r_{31}}{4\eta}, \quad \epsilon_z = \frac{r_{21} - r_{12}}{4\eta}
+\end{equation}
+
+\paragraph{Note on Numerical Robustness and Sign}
+As shown above, if $\eta \to 0$ (which happens for rotations near $\pi$), the division by $\eta$ becomes unstable. To maintain robustness, the final implementation often extracts the magnitudes from the diagonal elements and uses the \text{sgn} function to determine relative signs:
+\begin{align}
+\epsilon_x &= \frac{1}{2} \text{sgn}(r_{32} - r_{23}) \sqrt{r_{11} - r_{22} - r_{33} + 1} \\
+\epsilon_y &= \frac{1}{2} \text{sgn}(r_{13} - r_{31}) \sqrt{r_{22} - r_{11} - r_{33} + 1} \\
+\epsilon_z &= \frac{1}{2} \text{sgn}(r_{21} - r_{12}) \sqrt{r_{33} - r_{11} - r_{22} + 1}
+\end{align}
+
+\section{Homogeneous Transformations}
+
+To describe the full pose (position and orientation) of a rigid body in space, we combine rotation and translation into a single mathematical entity using \textbf{homogeneous coordinates}.
+
+\subsection{Homogeneous Transformation Matrix}
+Following the professor's notation, the transformation from a mobile frame $j$ to a frame $i$ is described by the $4 \times 4$ matrix $A_j^i$:
+\begin{equation}
+A_j^i = \begin{bmatrix} 
+R_j^i & \underline{o}_j^i \\ 
+\underline{0}^T & 1 
+\end{bmatrix} = \begin{bmatrix} 
+n_x & s_x & a_x & o_x \\ 
+n_y & s_y & a_y & o_y \\ 
+n_z & s_z & a_z & o_z \\ 
+0 & 0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+Where:
+\begin{itemize}
+    \item $R_j^i$ is the $3 \times 3$ rotation matrix.
+    \item $\underline{o}_j^i$ is the $3 \times 1$ position vector of the origin of frame $j$ relative to frame $i$.
+    \item The unit vectors $\underline{n}, \underline{s}, \underline{a}$ represent the Normal, Sliding, and Approach directions of the mobile frame.
+\end{itemize}
+
+\subsection{Coordinate Transformation}
+Given a point $P$, its coordinates in the reference frame $i$ are computed from its coordinates in the mobile frame $j$ as:
+\begin{equation}
+\underline{\tilde{p}}^i = A_j^i \underline{\tilde{p}}^j
+\end{equation}
+Which, in expanded form, corresponds to:
+\begin{equation}
+\begin{bmatrix} \underline{p}^i \\ 1 \end{bmatrix} = \begin{bmatrix} R_j^i & \underline{o}_j^i \\ \underline{0}^T & 1 \end{bmatrix} \begin{bmatrix} \underline{p}^j \\ 1 \end{bmatrix} = \begin{bmatrix} R_j^i \underline{p}^j + \underline{o}_j^i \\ 1 \end{bmatrix}
+\end{equation}
+
+\subsection{Inverse Transformation}
+The inverse transformation $A_i^j = (A_j^i)^{-1}$ is calculated using the property of block matrices:
+\begin{equation}
+(A_j^i)^{-1} = \begin{bmatrix} 
+(R_j^i)^T & -(R_j^i)^T \underline{o}_j^i \\ 
+\underline{0}^T & 1 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Composition of Transformations}
+Sequential transformations are obtained through matrix multiplication (Chain Rule). For a sequence of frames $0, 1, \dots, n$:
+\begin{equation}
+A_n^0 = A_1^0 A_2^1 \dots A_n^{n-1}
+\end{equation}
+\textit{Note: The order of multiplication follows the same rules as rotation matrices (pre-multiplication for fixed axes, post-multiplication for current axes).}
+
+\section{Direct Kinematics}
+
+The goal of direct kinematics is to determine the pose (position and orientation) of the robot's end-effector relative to a fixed base coordinate frame, given the joint variables (angles for revolute joints, displacements for prismatic joints).
+
+\subsection{Problem Definition}
+For an $n$-degree-of-freedom manipulator, let $\underline{q} = [q_1, q_2, \dots, q_n]^T$ be the vector of joint variables. The direct kinematics function $\mathcal{K}(\cdot)$ maps the joint space to the operational space:
+\begin{equation}
+\underline{x} = \mathcal{K}(\underline{q})
+\end{equation}
+Where $\underline{x}$ represents the transformation matrix $A_n^0$:
+\begin{equation}
+A_n^0(\underline{q}) = A_1^0(q_1) A_2^1(q_2) \dots A_n^{n-1}(q_n)
+\end{equation}
+
+\subsection{The Systematic Approach}
+While the chain of transformations is conceptually simple, calculating each $A_i^{i-1}$ manually for complex robots is prone to errors. This necessitates a systematic convention to:
+\begin{itemize}
+    \item Define a consistent coordinate frame for each link.
+    \item Minimize the number of parameters needed to describe each transformation.
+\end{itemize}
+This systematic approach is provided by the \textbf{Denavit-Hartenberg (D-H) Convention}.
+
+\section{Denavit-Hartenberg (D-H) Convention}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Capitolo 2/Immagini/D-H.png}
+    \caption{D-H Convention.}
+    \label{fig:D-H}
+\end{figure}
+
+The D-H convention provides a systematic method to describe the kinematics of an $n$-link manipulator by assigning a coordinate frame to each link and defining four parameters to describe the transformation between consecutive frames.
+
+\subsection{Frame Assignment Procedure}
+To define the frame $i$ relative to the link $i$, the following steps must be performed:
+\begin{enumerate}
+    \item \textbf{Axis $z_i$:} Choose the axis $z_i$ along the axis of joint $i+1$.
+    \item \textbf{Origin $O_i$:} Locate the origin $O_i$ at the intersection of axis $z_i$ with the \textbf{common normal} to axes $z_{i-1}$ and $z_i$. 
+    \item \textbf{Axis $x_i$:} Choose axis $x_i$ along the common normal to axes $z_{i-1}$ and $z_i$, directed from joint $i$ to joint $i+1$.
+    \item \textbf{Axis $y_i$:} Choose axis $y_i$ to complete a right-handed frame (following the cross product $z_i \times x_i$).
+\end{enumerate}
+\textit{Note: The common normal of two skewed axes is the shortest segment connecting them.}
+
+\subsection{The Four Parameters}
+The transformation $A_i^{i-1}$ is defined by four parameters describing the relation between frame $i-1$ and frame $i$:
+\begin{itemize}
+    \item $a_i$ (Link length): Distance between $O_{i-1}$ and $O_i$ measured along $x_i$.
+    \item $d_i$ (Link offset): Coordinate of $O_i$ along $z_{i-1}$.
+    \item $\alpha_i$ (Link twist): Angle between axes $z_{i-1}$ and $z_i$ about $x_i$ (positive counter-clockwise).
+    \item $\theta_i$ (Joint angle): Angle between axes $x_{i-1}$ and $x_i$ about axis $z_{i-1}$ (positive counter-clockwise).
+\end{itemize}
+
+\subsection{Joint Variables}
+\begin{itemize}
+    \item \textbf{Revolute Joint:} $\theta_i$ is the variable ($q_i = \theta_i$).
+    \item \textbf{Prismatic Joint:} $d_i$ is the variable ($q_i = d_i$).
+\end{itemize}
+
+\subsection{Decomposition of the D-H Transformation}
+The transformation from frame $i-1$ to frame $i$ is decomposed into two main steps.
+
+\paragraph{Step 1: From $i-1$ to an intermediate frame $i'$}
+This step accounts for the joint displacement ($\theta_i$ and $d_i$). We translate the $i-1$ frame by $d_i$ along $z_{i-1}$ and rotate it by $\theta_i$ about $z_{i-1}$:
+\begin{equation}
+A_{i'}^{i-1} = \begin{bmatrix} 
+\cos\theta_i & -\sin\theta_i & 0 & 0 \\ 
+\sin\theta_i & \cos\theta_i & 0 & 0 \\ 
+0 & 0 & 1 & d_i \\ 
+0 & 0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+
+\paragraph{Step 2: From $i'$ to $i$}
+This step accounts for the link geometry ($a_i$ and $\alpha_i$). We translate the intermediate frame by $a_i$ along $x_i$ and rotate it by $\alpha_i$ about $x_i$:
+\begin{equation}
+A_i^{i'} = \begin{bmatrix} 
+1 & 0 & 0 & a_i \\ 
+0 & \cos\alpha_i & -\sin\alpha_i & 0 \\ 
+0 & \sin\alpha_i & \cos\alpha_i & 0 \\ 
+0 & 0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Resulting Transformation Matrix}
+The total transformation $A_i^{i-1}$ is the product of the two matrices $A_{i'}^{i-1} A_i^{i'}$:
+\begin{equation}
+A_i^{i-1} = \begin{bmatrix} 
+\cos\theta_i & -\sin\theta_i\cos\alpha_i & \sin\theta_i\sin\alpha_i & a_i\cos\theta_i \\ 
+\sin\theta_i & \cos\theta_i\cos\alpha_i & -\cos\theta_i\sin\alpha_i & a_i\sin\theta_i \\ 
+0 & \sin\alpha_i & \cos\alpha_i & d_i \\ 
+0 & 0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Frame Assignment Procedure}
+
+To ensure a unique and consistent kinematic model, the following procedure must be followed:
+
+\begin{enumerate}
+    \item \textbf{Joint Axis Enumeration:} Identify and enumerate the joint axes from $1, \dots, n$ and associate each axis $i$ with $z_{i-1}$.
+    \item \textbf{Base Frame:} Define the base frame $(O_0, x_0, y_0, z_0)$ at joint 1.
+    \item \textbf{Origin $O_i$ Selection:} Locate the origin $O_i$ at the intersection between $z_i$ and the common normal to axes $z_{i-1}$ and $z_i$.
+    \begin{itemize}
+        \item \textbf{Parallel Axes Case:} If $z_{i-1}$ and $z_i$ are parallel:
+        \begin{itemize}
+            \item If joint $i$ is \textbf{revolute}, locate $O_i$ such that $d_i = 0$.
+            \item If joint $i$ is \textbf{prismatic}, locate $O_i$ at a reference position for the joint range.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Axis $x_i$ Selection:} Choose axis $x_i$ along the common normal to axes $z_{i-1}$ and $z_i$, directed from $z_{i-1}$ to $z_i$.
+    \item \textbf{Axis $y_i$ Selection:} Choose $y_i$ to obtain a right-handed frame (cross product $z_i \times x_i$).
+    \item \textbf{The $n$-th (End-Effector) Frame:} 
+    \begin{itemize}
+        \item If joint $n$ is \textbf{revolute}, align $z_n$ with $z_{n-1}$.
+        \item Otherwise, if $n$ is \textbf{prismatic}, choose $z_n$ arbitrarily (usually following the direction of motion).
+    \end{itemize}
+\end{enumerate}
+
+\section{Closed Kinematic Chains}
+
+While serial manipulators consist of a single path of links and joints, a \textbf{closed kinematic chain} occurs when a sequence of links forms a loop. This structure introduces geometric constraints because the end of two different branches must coincide at a specific joint.
+
+\subsection{Kinematic Constraints}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Capitolo 2/Immagini/closed_chain.png}
+    \caption{Closed chains.}
+    \label{fig:closed_chain_diagram}
+\end{figure}
+As shown in the figure, if we consider a loop starting from frame $i$ and splitting into two branches that reconnect at joint $j+1$, we can define two different paths for the transformation:
+
+\begin{itemize}
+    \item \textbf{Branch 1 (Yellow Path):} The transformation from frame $i$ to frame $j$ is given by:
+    \begin{equation}
+    A_j^i(q') = A_{i+1}^i(q_{i+1}) \dots A_j^{j-1}(q_j)
+    \end{equation}
+    \item \textbf{Branch 2 (Green Path):} An alternative path leads to the same connection point:
+    \begin{equation}
+    A_k^i(q'') = A_{i+1'}^i(q_{i+1'}) \dots A_k^{k-1}(q_k)
+    \end{equation}
+\end{itemize}
+
+\subsection{Closure Equations}
+Since the two branches are physically connected at the same location, the position and orientation described by both paths must be consistent. This leads to the \textbf{closure constraint}:
+
+\begin{equation}
+A_j^i(q') = A_k^i(q'') \quad \text{where } k = j
+\end{equation}
+
+These equations imply that the joint variables $\underline{q}$ are no longer independent. The number of independent degrees of freedom (DoF) is reduced by the number of constraints imposed by the closed loop.
+
+\subsection{Specific Kinematic Constraints for Loop Closure}
+To ensure the physical continuity of the closed chain, the reference frames at the cut (frame $j$ and frame $k$) must satisfy several geometric constraints.
+
+\paragraph{$1^o$ Constraint: Axis Alignment}
+The first requirement is that the $z$-axes of the two frames must coincide:
+\begin{equation}
+z_j^i(q') = z_k^i(q'') \quad \text{(Same $z$-axis)}
+\end{equation}
+
+\paragraph{$2^o$ Constraint: Orientation Alignment}
+For a prismatic joint, the relative orientation between the frames is constrained. The projection of the $x$-axes must account for the joint angle $\theta_{jk}$:
+\begin{equation}
+x_j^{iT}(q') x_k^i(q'') = \cos\theta_{jk}
+\end{equation}
+
+\paragraph{$3^o$ Constraint: Position Vector}
+The distance between the origins of the two frames, when projected into the $j$-th frame, must match the joint's geometric parameters (like the link offset $d_{jk}$):
+\begin{equation}
+R_i^j(q') \left( p_j^i(q') - p_k^i(q'') \right) = \begin{bmatrix} 0 \\ 0 \\ d_{jk} \end{bmatrix}
+\end{equation}
+\textit{Note: The rotation matrix $R_i^j$ projects the distance vector into the local $j$-frame coordinates.}
+
+\subsection{Distinction between Rotoid and Prismatic Joints}
+The nature of the constraint equations changes depending on the joint type at the cut:
+\begin{itemize}
+    \item \textbf{Rotoid Joint:} The displacement $d_{jk}$ remains constant.
+    \item \textbf{Prismatic Joint:} The displacement $d_{jk}$ becomes the joint variable. In this case, the position constraint simplifies to 2 equations by ensuring the origins lie on the same sliding axis:
+\end{itemize}
+\begin{equation}
+\begin{bmatrix} x_j^{iT}(q') \\ y_j^{iT}(q') \end{bmatrix} \left( p_j^i(q') - p_k^i(q'') \right) = \begin{bmatrix} 0 \\ 0 \end{bmatrix}
+\end{equation}
+
+\section{Closed Kinematic Chains: Procedure and Constraints}
+
+To analyze a closed kinematic chain, we follow a systematic procedure to define the geometric constraints that keep the loop closed.
+
+\subsection{General Procedure}
+\begin{enumerate}
+    \item \textbf{Virtual Cut:} Identify a non-actuated joint and "cut" it to transform the closed loop into an open tree structure.
+    \item \textbf{Kinematic Modeling:} Compute the homogeneous transformation matrices using the D-H convention for the two resulting branches.
+    \item \textbf{Constraint Identification:} Define the kinematic constraints for the two frames (let's call them $j$ and $n$) that are physically connected by the cut joint.
+\end{enumerate}
+
+\subsection{Kinematic Loop Closure Equations}
+The consistency between the two paths (Branch 1 with variables $q'$ and Branch 2 with variables $q''$) is enforced by three fundamental constraints.
+
+\paragraph{$1^\circ$ Constraint: Axis Alignment}
+The $z$-axes of the two frames must remain aligned:
+\begin{equation}
+z_j^i(q') = z_n^i(q'') \quad \text{(Same $z$-axis)}
+\end{equation}
+
+\paragraph{$2^\circ$ Constraint: Relative Orientation}
+Specifically for prismatic joints, the orientation of the $x$-axes must account for the fixed or variable joint angle $\theta_{jn}$:
+\begin{equation}
+x_j^{iT}(q') x_n^i(q'') = \cos\theta_{jn}
+\end{equation}
+
+\paragraph{$3^\circ$ Constraint: Position Vector}
+The vector connecting the origins of the two frames, when projected into the local frame $j$, must satisfy the joint's translation:
+\begin{equation}
+R_i^j(q') \left( p_j^i(q') - p_n^i(q'') \right) = \begin{bmatrix} 0 \\ 0 \\ d_{jn} \end{bmatrix}
+\end{equation}
+\textit{Note: The rotation matrix $R_i^j = (R_j^i)^T$ is used to project the distance vector into the local $j$-frame coordinates.}
+
+\subsection{Joint-Specific Constraints}
+The mathematical form of the constraints depends on whether the joint at the cut ($j+1$) is rotational or prismatic.
+
+\paragraph{Case 1: Rotational Joint}
+If the joint is rotational, the offset $d_{jn}$ is constant. The system consists of:
+\begin{equation}
+\begin{cases}
+R_i^j(q') \left( p_j^i(q') - p_n^i(q'') \right) = [0 \quad 0 \quad d_{jn}]^T \\
+z_j^i(q') = z_n^i(q'')
+\end{cases}
+\end{equation}
+
+\paragraph{Case 2: Prismatic Joint}
+If the joint is prismatic, the displacement $d_{jn}$ is variable. Therefore, the distance constraint only applies to the $x$ and $y$ components (ensuring the origins lie on the same sliding axis), reducing it to 2 equations:
+\begin{equation}
+\begin{cases}
+\begin{bmatrix} x_j^{iT}(q') \\ y_j^{iT}(q') \end{bmatrix} \left( p_j^i(q') - p_n^i(q'') \right) = \begin{bmatrix} 0 \\ 0 \end{bmatrix} \\
+z_j^i(q') = z_n^i(q'') \\
+x_j^{iT}(q') x_n^i(q'') = \cos\theta_{jn}
+\end{cases}
+\end{equation}
+
+\section{Inverse Kinematics}
+
+The inverse kinematics problem consists of determining the joint coordinates $\underline{q}$ required to obtain a desired end-effector pose (position and orientation).
+
+\subsection{Difficulties and Characteristics}
+Unlike direct kinematics, the inverse problem is generally more complex due to:
+\begin{itemize}
+    \item \textbf{Non-linear Equations:} The relationship between joints and pose involves transcendental functions.
+    \item \textbf{Multiple Solutions:} Different joint configurations can lead to the same end-effector pose.
+    \item \textbf{Infinite Solutions:} Occurs in redundant manipulators (more degrees of freedom than required).
+    \item \textbf{Non-Admissible Solutions:} Some poses may be outside the robot's workspace or lead to joint limit violations.
+\end{itemize}
+
+\section{Differential Kinematics}
+
+Differential kinematics describes the relationship between the joint velocities $\underline{\dot{q}}$ and the corresponding end-effector linear velocity $\underline{\dot{p}}_e$ and angular velocity $\underline{\omega}_e$.
+
+\subsection{The Geometric Jacobian}
+The fundamental tool for this mapping is the \textbf{Jacobian matrix} $J(\underline{q})$. Given the transformation matrix:
+\begin{equation}
+T(\underline{q}) = \begin{bmatrix} R(\underline{q}) & \underline{p}(\underline{q}) \\ \underline{0}^T & 1 \end{bmatrix}
+\end{equation}
+The velocities are related by:
+\begin{equation}
+\underline{v}_e = \begin{bmatrix} \underline{\dot{p}}_e \\ \underline{\omega}_e \end{bmatrix} = J(\underline{q}) \underline{\dot{q}}
+\end{equation}
+Where $J$ is a $(6 \times n)$ matrix composed of two blocks:
+\begin{itemize}
+    \item $J_P$ ($3 \times n$): Linear velocity Jacobian.
+    \item $J_O$ ($3 \times n$): Angular velocity Jacobian.
+\end{itemize}
+
+\subsection{Derivative of the Rotation Matrix}
+To derive the Jacobian, we analyze the time derivative of the rotation matrix $R(t)$. Since $R(t)R^T(t) = I$:
+\begin{equation}
+\dot{R}(t)R^T(t) + R(t)\dot{R}^T(t) = 0 \implies S(t) + S^T(t) = 0
+\end{equation}
+This defines the \textbf{Skew-Symmetric Matrix} $S(\underline{\omega}(t))$, which relates $\dot{R}$ to the angular velocity $\underline{\omega}$:
+\begin{equation}
+\dot{R}(t) = S(\underline{\omega}(t)) R(t)
+\end{equation}
+Where $S$ is defined as:
+\begin{equation}
+S = \begin{bmatrix} 0 & -\omega_z & \omega_y \\ \omega_z & 0 & -\omega_x \\ -\omega_y & \omega_x & 0 \end{bmatrix} \implies S(\underline{\omega})
+\end{equation}
+
+\subsection{Example: Rotation about the z-axis}
+To verify the relationship $\dot{R} = S(\underline{\omega})R$, let's consider a rotation about the $z$-axis by an angle $\alpha(t)$:
+\begin{equation}
+R_{z}(\alpha) = \begin{bmatrix} 
+\cos\alpha & -\sin\alpha & 0 \\ 
+\sin\alpha & \cos\alpha & 0 \\ 
+0 & 0 & 1 
+\end{bmatrix}
+\end{equation}
+
+Computing the skew-symmetric matrix $S = \dot{R} R^T$:
+\begin{equation}
+S = \begin{bmatrix} 
+-\dot{\alpha}\sin\alpha & -\dot{\alpha}\cos\alpha & 0 \\ 
+\dot{\alpha}\cos\alpha & -\dot{\alpha}\sin\alpha & 0 \\ 
+0 & 0 & 0 
+\end{bmatrix} \begin{bmatrix} 
+\cos\alpha & \sin\alpha & 0 \\ 
+-\sin\alpha & \cos\alpha & 0 \\ 
+0 & 0 & 1 
+\end{bmatrix} = \begin{bmatrix} 
+0 & -\dot{\alpha} & 0 \\ 
+\dot{\alpha} & 0 & 0 \\ 
+0 & 0 & 0 
+\end{bmatrix}
+\end{equation}
+This confirms that for a rotation about $z$, the angular velocity vector is $\underline{\omega} = [0, 0, \dot{\alpha}]^T$, such that $\omega_z = \dot{\alpha}$.
+
+\subsection{Velocity of a Point and Transportation Term}
+Consider a point $P$ whose position in the fixed frame $0$ is given by $\underline{p}^0 = \underline{o}_1^0 + R_1^0 \underline{p}^1$.
+Differentiating with respect to time:
+\begin{equation}
+\underline{\dot{p}}^0 = \underline{\dot{o}}_1^0 + R_1^0 \underline{\dot{p}}^1 + \dot{R}_1^0 \underline{p}^1
+\end{equation}
+
+Substituting $\dot{R}_1^0 = S(\underline{\omega}_1^0)R_1^0$:
+\begin{equation}
+\underline{\dot{p}}^0 = \underline{\dot{o}}_1^0 + R_1^0 \underline{\dot{p}}^1 + S(\underline{\omega}_1^0)R_1^0 \underline{p}^1
+\end{equation}
+
+Defining $\underline{r}_1^0 = R_1^0 \underline{p}^1$ as the position of $P$ relative to the mobile origin expressed in the fixed frame (representing rotation but not translation), the expression becomes:
+\begin{equation}
+\underline{\dot{p}}^0 = \underline{\dot{o}}_1^0 + R_1^0 \underline{\dot{p}}^1 + \underline{\omega}_1^0 \times \underline{r}_1^0
+\end{equation}
+The term $\underline{\omega}_1^0 \times \underline{r}_1^0$ is the \textbf{Transportation Term}.
+
+\subsection{Algebraic Cross Product Representation}
+The skew-symmetric operator allows computing the cross product $\underline{\omega} \times \underline{b}$ through matrix multiplication:
+\begin{equation}
+S(\underline{\omega})\underline{b} = \begin{bmatrix} 
+0 & -\omega_z & \omega_y \\ 
+\omega_z & 0 & -\omega_x \\ 
+-\omega_y & \omega_x & 0 
+\end{bmatrix} \begin{bmatrix} b_x \\ b_y \\ b_z \end{bmatrix} = \begin{bmatrix} 
+-\omega_z b_y + \omega_y b_z \\ 
+\omega_z b_x - \omega_x b_z \\ 
+-\omega_y b_x + \omega_x b_y 
+\end{bmatrix}
+\end{equation}
+This matches the formal determinant expansion:
+\begin{equation}
+\underline{\omega} \times \underline{b} = \det \begin{bmatrix} 
+\underline{i} & \underline{j} & \underline{k} \\ 
+\omega_x & \omega_y & \omega_z \\ 
+b_x & b_y & b_z 
+\end{bmatrix}
+\end{equation}
+
+\section{Velocity of a Rigid Body}
+
+\subsection{Linear Velocity of a Link}
+Consider a generic link $i$ in a kinematic chain. Its position relative to the base frame is determined by the recursive relation:
+\begin{equation}
+\underline{p}_i = \underline{p}_{i-1} + R_{i-1} \underline{r}_{i-1,i}^{i-1}
+\end{equation}
+Where $\underline{r}_{i-1,i}^{i-1}$ is the vector from the origin of frame $i-1$ to frame $i$, expressed in frame $i-1$. By differentiating this expression:
+\begin{equation}
+\underline{\dot{p}}_i = \underline{\dot{p}}_{i-1} + R_{i-1} \underline{\dot{r}}_{i-1,i}^{i-1} + \dot{R}_{i-1} \underline{r}_{i-1,i}^{i-1}
+\end{equation}
+
+Applying the skew-symmetric operator $\dot{R} = S(\underline{\omega})R$:
+\begin{equation}
+\underline{\dot{p}}_i = \underline{\dot{p}}_{i-1} + R_{i-1} \underline{\dot{r}}_{i-1,i}^{i-1} + S(\underline{\omega}_{i-1}) R_{i-1} \underline{r}_{i-1,i}^{i-1}
+\end{equation}
+Defining $\underline{r}_{i-1,i} = R_{i-1} \underline{r}_{i-1,i}^{i-1}$, we obtain the recursive linear velocity formula:
+\begin{equation}
+\underline{\dot{p}}_i = \underline{\dot{p}}_{i-1} + \underline{v}_{i-1,i} + \underline{\omega}_{i-1} \times \underline{r}_{i-1,i}
+\end{equation}
+Where $\underline{v}_{i-1,i}$ represents the velocity of frame $i$ with respect to frame $i-1$.
+
+\subsection{Angular Velocity of a Link}
+The total orientation of link $i$ is the composition of orientations $R_i = R_{i-1} R_i^{i-1}$. Differentiating with respect to time yields:
+\begin{equation}
+\dot{R}_i = \dot{R}_{i-1} R_i^{i-1} + R_{i-1} \dot{R}_i^{i-1}
+\end{equation}
+Substituting the skew-symmetric representations $S(\underline{\omega}_i) R_i$ and utilizing the property $R S(\underline{\omega}) R^T = S(R \underline{\omega})$:
+\begin{equation}
+S(\underline{\omega}_i) R_i = S(\underline{\omega}_{i-1}) R_i + S(R_{i-1} \underline{\omega}_{i-1,i}^{i-1}) R_i
+\end{equation}
+Extracting the angular velocity vectors, we obtain the recursive form:
+\begin{equation}
+\underline{\omega}_i = \underline{\omega}_{i-1} + R_{i-1} \underline{\omega}_{i-1,i}^{i-1} = \underline{\omega}_{i-1} + \underline{\omega}_{i-1,i}
+\end{equation}
+where $\underline{\omega}_{i-1,i}$ is the angular velocity of frame $i$ with respect to frame $i-1$ expressed in the base frame.
+
+\subsection{In Total}
+The recursive kinematics for the entire chain can be summarized as:
+\begin{equation}
+\begin{cases}
+\underline{\omega}_i = \underline{\omega}_{i-1} + \underline{\omega}_{i-1,i} \\
+\underline{\dot{p}}_i = \underline{\dot{p}}_{s-1} + \underline{v}_{i-1,i} + \underline{\omega}_{i-1} \times \underline{r}_{i-1,i}
+\end{cases}
+\end{equation}
+
+\section{Jacobian Computation}
+The Jacobian $J$ maps joint velocities to end-effector velocities. It is composed of $n$ columns, where each column refers to a joint and is divided into two $3 \times 1$ vectors referring to linear and angular motion:
+\begin{equation}
+J = \begin{bmatrix} J_{P1} & \dots & J_{Pn} \\ J_{O1} & \dots & J_{On} \end{bmatrix}
+\end{equation}
+
+\subsection{Angular Velocity Contribution}
+\begin{itemize}
+    \item \textbf{Prismatic joint}: Since it does not rotate, $\dot{q}_i \underline{J}_{Oi} = 0 \implies \underline{J}_{Oi} = 0$.
+    \item \textbf{Revolute joint}: The rotation occurs about the axis $\underline{z}_{i-1}$, thus $\dot{q}_i \underline{J}_{Oi} = \dot{\theta}_i \underline{z}_{i-1} \implies \underline{J}_{Oi} = \underline{z}_{i-1}$.
+\end{itemize}
+
+\subsection{Linear Velocity Contribution}
+\begin{itemize}
+    \item \textbf{Prismatic joint}: The translation occurs along the axis, $\dot{q}_i \underline{J}_{Pi} = \dot{d}_i \underline{z}_{i-1} \implies \underline{J}_{Pi} = \underline{z}_{i-1}$.
+    \item \textbf{Revolute joint}: We need to find the linear velocity of the end-effector ($\underline{p}_e$) due to the revolute joint $i$:
+    \begin{equation}
+    \dot{q}_i \underline{J}_{Pi} = \underline{\omega}_{i-1,i} \times \underline{r}_{i-1,e} = (\dot{\theta}_i \underline{z}_{i-1}) \times (\underline{p}_e - \underline{p}_{i-1})
+    \end{equation}
+    Which leads to the column entry:
+    \begin{equation}
+    \underline{J}_{Pi} = \underline{z}_{i-1} \times (\underline{p}_e - \underline{p}_{i-1})
+    \end{equation}
+\end{itemize}
+
+\subsection{Final Formulation}
+The complete geometric Jacobian components for each joint $i$ are:
+\begin{equation}
+\begin{bmatrix} \underline{J}_{Pi} \\ \underline{J}_{Oi} \end{bmatrix} = 
+\begin{cases} 
+\begin{bmatrix} \underline{z}_{i-1} \\ 0 \end{bmatrix} & \text{Prismatic Joint} \\
+\begin{bmatrix} \underline{z}_{i-1} \times (\underline{p}_e - \underline{p}_{i-1}) \\ \underline{z}_{z-1} \end{bmatrix} & \text{Revolute Joint}
+\end{cases}
+\end{equation}
+
+From forward kinematics, we can identify:
+\begin{itemize}
+    \item $\underline{z}_{i-1} = R_1^0(q_1) \dots R_{i-1}^{i-2}(q_{i-1}) \underline{z}_0$
+    \item $\underline{p}_e = A_1^0(q_1) \dots A_n^{n-1}(q_n) \underline{p}_0$
+\end{itemize}
+As a result, \textbf{we can compute the Jacobian without using derivatives}.
+
+\section{Example: 3 Links Planar Manipulator}
+Consider a planar manipulator with three revolute joints moving in the $xy$-plane.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Capitolo 2/Immagini/3LPMex.png}
+    \caption{3 Links Planar Manipulator.}
+    \label{fig:3LPMex}
+\end{figure}
+
+The Jacobian matrix $J(q)$ for this 3-DOF robot is defined column by column as:
+\begin{equation}
+J(q) = \begin{bmatrix} 
+\underline{z}_0 \times (\underline{p}_3 - \underline{p}_0) & \underline{z}_1 \times (\underline{p}_3 - \underline{p}_1) & \underline{z}_2 \times (\underline{p}_3 - \underline{p}_2) \\
+\underline{z}_0 & \underline{z}_1 & \underline{z}_2
+\end{bmatrix}
+\end{equation}
+
+\subsection{Geometric Definitions}
+From the manipulator's geometry and forward kinematics, we identify the following vectors:
+\begin{itemize}
+    \item \textbf{Joint axes}: Since the motion is planar, all rotation axes are parallel to $z$:
+    \begin{equation}
+    \underline{z}_0 = \underline{z}_1 = \underline{z}_2 = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}
+    \end{equation}
+    \item \textbf{Joint positions}:
+    \begin{itemize}
+        \item $\underline{p}_0 = \begin{bmatrix} 0 & 0 & 0 \end{bmatrix}^T$
+        \item $\underline{p}_1 = \begin{bmatrix} a_1 C_1 & a_1 S_1 & 0 \end{bmatrix}^T$
+        \item $\underline{p}_2 = \begin{bmatrix} a_1 C_1 + a_2 C_{12} & a_1 S_1 + a_2 S_{12} & 0 \end{bmatrix}^T$
+        \item $\underline{p}_3 = \begin{bmatrix} a_1 C_1 + a_2 C_{12} + a_3 C_{123} & a_1 S_1 + a_2 S_{12} + a_3 S_{123} & 0 \end{bmatrix}^T$
+    \end{itemize}
+\end{itemize}
+
+\subsection{Calculation of Linear Velocity Columns ($J_P$)}
+We compute the cross products $\underline{z}_{i-1} \times (\underline{p}_3 - \underline{p}_{i-1})$ using the determinant form:
+
+\paragraph{First Column ($i=1$):}
+\begin{equation}
+\underline{z}_0 \times (\underline{p}_3 - \underline{p}_0) = \begin{vmatrix} \underline{i} & \underline{j} & \underline{k} \\ 0 & 0 & 1 \\ p_{3x} & p_{3y} & 0 \end{vmatrix} = \begin{bmatrix} -p_{3y} \\ p_{3x} \\ 0 \end{bmatrix} = \begin{bmatrix} -a_1 S_1 - a_2 S_{12} - a_3 S_{123} \\ a_1 C_1 + a_2 C_{12} + a_3 C_{123} \\ 0 \end{bmatrix}
+\end{equation}
+
+\paragraph{Second Column ($i=2$):}
+\begin{equation}
+\underline{z}_1 \times (\underline{p}_3 - \underline{p}_1) = \begin{vmatrix} \underline{i} & \underline{j} & \underline{k} \\ 0 & 0 & 1 \\ p_{3x}-p_{1x} & p_{3y}-p_{1y} & 0 \end{vmatrix} = \begin{bmatrix} -(p_{3y}-p_{1y}) \\ p_{3x}-p_{1x} \\ 0 \end{bmatrix} = \begin{bmatrix} -a_2 S_{12} - a_3 S_{123} \\ a_2 C_{12} + a_3 C_{123} \\ 0 \end{bmatrix}
+\end{equation}
+
+\paragraph{Third Column ($i=3$):}
+\begin{equation}
+\underline{z}_2 \times (\underline{p}_3 - \underline{p}_2) = \begin{vmatrix} \underline{i} & \underline{j} & \underline{k} \\ 0 & 0 & 1 \\ p_{3x}-p_{2x} & p_{3y}-p_{2y} & 0 \end{vmatrix} = \begin{bmatrix} -(p_{3y}-p_{2y}) \\ p_{3x}-p_{2x} \\ 0 \end{bmatrix} = \begin{bmatrix} -a_3 S_{123} \\ a_3 C_{123} \\ 0 \end{bmatrix}
+\end{equation}
+
+\subsection{Final Jacobian Matrix}
+Assembling the linear ($J_P$) and angular ($J_O$) parts, the $6 \times 3$ Geometric Jacobian is:
+\begin{equation}
+J = \begin{bmatrix} 
+-a_1 S_1 - a_2 S_{12} - a_3 S_{123} & -a_2 S_{12} - a_3 S_{123} & -a_3 S_{123} \\
+a_1 C_1 + a_2 C_{12} + a_3 C_{123} & a_2 C_{12} + a_3 C_{123} & a_3 C_{123} \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+1 & 1 & 1 
+\end{bmatrix}
+\end{equation}
+
+
+\section{Example: Anthropomorphic Manipulator}
+Consider a 3-DOF anthropomorphic arm. This configuration consists of a revolute joint rotating about the base $z$-axis, followed by two revolute joints with parallel axes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 2/Immagini/AMex.png}
+    \caption{Anthropomorphic Manipulator.}
+    \label{fig:AMex}
+\end{figure}
+
+
+\subsection{Geometric Definitions}
+From the Denavit-Hartenberg frames or direct inspection of the geometry, we identify the following vectors:
+
+\begin{itemize}
+    \item \textbf{Joint axes}:
+    \begin{itemize}
+        \item $\underline{z}_0 = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}$ (Rotation about the base)
+        \item $\underline{z}_1 = \begin{bmatrix} S_1 \\ -C_1 \\ 0 \end{bmatrix}$ (Horizontal axis dependent on the base rotation)
+        \item $\underline{z}_2 = \begin{bmatrix} S_1 \\ -C_1 \\ 0 \end{bmatrix}$ (Axis parallel to $\underline{z}_1$)
+    \end{itemize}
+    
+    \item \textbf{Joint and End-Effector positions}:
+    \begin{itemize}
+        \item $\underline{p}_0 = \underline{p}_1 = \begin{bmatrix} 0 \\ 0 \\ 0 \end{bmatrix}$
+        \item $\underline{p}_2 = \begin{bmatrix} a_2 C_1 C_2 \\ a_2 S_1 C_2 \\ a_2 S_2 \end{bmatrix}$
+        \item $\underline{p}_3 = \begin{bmatrix} C_1(a_2 C_2 + a_3 C_{23}) \\ S_1(a_2 C_2 + a_3 C_{23}) \\ a_2 S_2 + a_3 S_{23} \end{bmatrix}$
+    \end{itemize}
+\end{itemize}
+
+\subsection{Jacobian Matrix}
+By calculating the cross products $\underline{J}_{Pi} = \underline{z}_{i-1} \times (\underline{p}_e - \underline{p}_{i-1})$ for the linear part and using the joint axes for the angular part, we obtain the $6 \times 3$ Geometric Jacobian:
+
+\begin{equation}
+J = \begin{bmatrix} 
+-S_1(a_2 C_2 + a_3 C_{23}) & -C_1(a_2 S_2 + a_3 S_{23}) & -a_3 C_1 S_{23} \\
+C_1(a_2 C_2 + a_3 C_{23}) & -S_1(a_2 S_2 + a_3 S_{23}) & -a_3 S_1 S_{23} \\
+0 & a_2 C_2 + a_3 C_{23} & a_3 C_{23} \\
+0 & S_1 & S_1 \\
+0 & -C_1 & -C_1 \\
+1 & 0 & 0 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Analysis}
+Only the first 3 rows are linearly independent. This makes sense because we have 3 D.O.F., and the manipulator is being analyzed in terms of its primary positioning capabilities in 3D space.
+
+\section{Stanford Manipulator}
+The Stanford manipulator is a 6-DOF robot with a spherical wrist. It is characterized by a specific sequence of joints (RRPRRR).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 2/Immagini/SMex.png}
+    \caption{Stanford Manipulator.}
+    \label{fig:SMex}
+\end{figure}
+
+
+The Geometric Jacobian $J$ for this 6-degree-of-freedom manipulator is a $6 \times 6$ matrix, where each column is calculated based on the type of joint (revolute or prismatic):
+
+\begin{equation}
+J = \left[ \begin{array}{cccccc}
+\underline{z}_0 \times (\underline{p}_6 - \underline{p}_0) & \underline{z}_1 \times (\underline{p}_6 - \underline{p}_1) & \underline{z}_2 & \underline{z}_3 \times (\underline{p}_6 - \underline{p}_3) & \underline{z}_4 \times (\underline{p}_6 - \underline{p}_4) & \underline{z}_5 \times (\underline{p}_6 - \underline{p}_5) \\
+\underline{z}_0 & \underline{z}_1 & 0 & \underline{z}_3 & \underline{z}_4 & \underline{z}_5
+\end{array} \right]
+\end{equation}
+
+\subsection{Observations on the Jacobian Structure}
+\begin{itemize}
+    \item \textbf{Joint 3 (Prismatic)}: The third column corresponds to a prismatic joint. Therefore, its angular velocity contribution is null ($J_{O3} = 0$) and its linear velocity contribution is simply the direction of the joint axis ($J_{P3} = \underline{z}_2$).
+    \item \textbf{Spherical Wrist}: The last three columns ($\underline{z}_3, \underline{z}_4, \underline{z}_5$) represent the spherical wrist. The axes of these three revolute joints intersect at a single point (the wrist center).
+\end{itemize}
+
+\section{Kinematic Singularities}
+The mapping between joint velocities and end-effector velocities is given by $\underline{v}_e = J(\underline{q}) \underline{\dot{q}}$. If the rank of the Jacobian matrix $\rho(J)$ decreases, we encounter configurations known as \textbf{kinematic singularities}.
+
+The main consequences of being in a singular configuration are:
+\begin{itemize}
+    \item \textbf{Reduced Mobility}: It is not possible to impose an arbitrary motion to the end-effector in certain directions of the operational space.
+    \item \textbf{Infinite Solutions}: There may exist infinite solutions for the inverse kinematics problem.
+    \item \textbf{Velocity Discontinuity}: In the proximity of a singularity, even small velocities in the operational space can cause extremely large (theoretically infinite) velocities in the joint space.
+\end{itemize}
+
+\section{Example: 2 Links Planar Arm}
+Consider a planar arm with two revolute joints to analyze its singular configurations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 2/Immagini/2linkplanar.png}
+    \caption{2 Links Planar Arm.}
+    \label{fig:2linkplanar}
+\end{figure}
+
+\subsection{Jacobian Matrix Construction}
+The geometric Jacobian is defined as:
+\begin{equation}
+J = \begin{bmatrix} \underline{z}_0 \times (\underline{p}_2 - \underline{p}_0) & \underline{z}_1 \times (\underline{p}_2 - \underline{p}_1) \\ \underline{z}_0 & \underline{z}_1 \end{bmatrix}
+\end{equation}
+
+Given the geometry:
+\begin{itemize}
+    \item $\underline{z}_0 = \underline{z}_1 = \begin{bmatrix} 0 & 0 & 1 \end{bmatrix}^T$
+    \item $\underline{p}_0 = \begin{bmatrix} 0 & 0 & 0 \end{bmatrix}^T$
+    \item $\underline{p}_1 = \begin{bmatrix} a_1 C_1 & a_1 S_1 & 0 \end{bmatrix}^T$
+    \item $\underline{p}_2 = \begin{bmatrix} a_1 C_1 + a_2 C_{12} & a_1 S_1 + a_2 S_{12} & 0 \end{bmatrix}^T$
+\end{itemize}
+
+Computing the cross products for the linear part:
+\begin{equation}
+\underline{z}_0 \times (\underline{p}_2 - \underline{p}_0) = \begin{vmatrix} i & j & k \\ 0 & 0 & 1 \\ a_1 C_1 + a_2 C_{12} & a_1 S_1 + a_2 S_{12} & 0 \end{vmatrix} = \begin{bmatrix} -a_1 S_1 - a_2 S_{12} \\ a_1 C_1 + a_2 C_{12} \\ 0 \end{bmatrix}
+\end{equation}
+\begin{equation}
+\underline{z}_1 \times (\underline{p}_2 - \underline{p}_1) = \begin{vmatrix} i & j & k \\ 0 & 0 & 1 \\ a_2 C_{12} & a_2 S_{12} & 0 \end{vmatrix} = \begin{bmatrix} -a_2 S_{12} \\ a_2 C_{12} \\ 0 \end{bmatrix}
+\end{equation}
+
+The full $6 \times 2$ Jacobian is:
+\begin{equation}
+J = \begin{bmatrix} 
+-a_1 S_1 - a_2 S_{12} & -a_2 S_{12} \\
+a_1 C_1 + a_2 C_{12} & a_2 C_{12} \\
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+1 & 1 
+\end{bmatrix}
+\end{equation}
+
+\subsection{Determinant and Singularity Analysis}
+To find the singularities, we consider only the motion in the $xy$ plane ($\dot{p}_x, \dot{p}_y$), reducing $J$ to a $2 \times 2$ matrix:
+\begin{equation}
+J = \begin{bmatrix} 
+-a_1 S_1 - a_2 S_{12} & -a_2 S_{12} \\
+a_1 C_1 + a_2 C_{12} & a_2 C_{12} 
+\end{bmatrix}
+\end{equation}
+
+The determinant is calculated as follows:
+\begin{equation}
+\det(J) = a_2 C_{12} (-a_1 S_1 - a_2 S_{12}) - (-a_2 S_{12})(a_1 C_1 + a_2 C_{12})
+\end{equation}
+\begin{equation}
+\det(J) = -a_1 a_2 S_1 C_{12} - a_2^2 S_{12} C_{12} + a_1 a_2 C_1 S_{12} + a_2^2 S_{12} C_{12}
+\end{equation}
+Simplifying the terms $a_2^2 S_{12} C_{12}$:
+\begin{equation}
+\det(J) = a_1 a_2 (S_{12} C_1 - C_{12} S_1)
+\end{equation}
+Using the trigonometric identity $\sin(\alpha - \beta) = \sin\alpha \cos\beta - \cos\alpha \sin\beta$:
+\begin{equation}
+\det(J) = a_1 a_2 \sin(\theta_{12} - \theta_1) = a_1 a_2 \sin(\theta_2)
+\end{equation}
+
+\subsection{Conclusion on Singularities}
+The determinant $\det(J) = 0$ when $\sin(\theta_2) = 0$, which implies:
+\begin{equation}
+\theta_2 = 0 \quad \text{or} \quad \theta_2 = \pi
+\end{equation}
+
+In these configurations, the matrix becomes:
+\begin{equation}
+J = \begin{bmatrix} -(a_1 + a_2) S_1 & -a_2 S_1 \\ (a_1 + a_2) C_1 & a_2 C_1 \end{bmatrix}
+\end{equation}
+As we can see, the two column vectors are parallel. Consequently:
+\begin{equation}
+\rho(J) = 1 < 2
+\end{equation}
+The manipulator loses one degree of freedom and cannot move along the direction of the arm itself (radial direction).
+
+\section{Spherical Arm + Spherical Wrist}
+In this case, computing the determinant of the full $6 \times 6$ Jacobian and studying the singularities directly is algebraically difficult. To simplify the problem, we split it into two separate sub-problems:
+\begin{enumerate}
+    \item Computation of \textbf{Arm Singularities} (related to the first 3 links).
+    \item Computation of \textbf{Wrist Singularities} (related to the last 3 links).
+\end{enumerate}
+
+The Jacobian can be partitioned into $3 \times 3$ blocks:
+\begin{equation}
+J = \begin{bmatrix} J_{11} & J_{12} \\ J_{21} & J_{22} \end{bmatrix}
+\end{equation}
+
+By choosing the origin of the end-effector frame ($p_e$) at the intersection of the wrist axes ($p_w$), the vector $p_e - p_i$ becomes parallel to the joint axes $z_i$ for $i=3, 4, 5$. Consequently, the cross products in $J_{12}$ vanish:
+\begin{equation}
+J_{12} = \begin{bmatrix} 0 & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+\end{equation}
+
+This results in a \textbf{block lower triangular matrix}:
+\begin{equation}
+\det(J) = \det(J_{11}) \cdot \det(J_{22})
+\end{equation}
+The global singularity condition $\det(J) = 0$ is satisfied if either $\det(J_{11}) = 0$ (Arm Singularities) or $\det(J_{22}) = 0$ (Wrist Singularities).
+
+\subsection{Wrist Singularities}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 2/Immagini/wristsingularity.png}
+    \caption{Wrist singularity.}
+    \label{fig:wristsinguarity}
+\end{figure}
+
+The wrist Jacobian block is defined by the rotation axes of the spherical wrist:
+\begin{equation}
+J_{22} = \begin{bmatrix} \underline{z}_3 & \underline{z}_4 & \underline{z}_5 \end{bmatrix}
+\end{equation}
+
+
+The determinant $\det(J_{22})$ is zero when $\underline{z}_3$ and $\underline{z}_5$ are aligned. This occurs when:
+\begin{equation}
+\theta_5 = 0 \quad \text{or} \quad \theta_5 = \pi
+\end{equation}
+
+\paragraph{Physical interpretation}: When $\theta_5 = 0$, a rotation about $\theta_4$ and $\theta_6$ in opposite directions does not produce any rotation of the end-effector. The manipulator loses mobility since it cannot rotate about the axis orthogonal to $\underline{z}_3$ and $\underline{z}_4$. This singularity can be encountered anywhere in the workspace.
+
+\subsection{Arm Singularities}
+
+
+For an anthropomorphic arm, the determinant of the linear part $J_P$ is:
+\begin{equation}
+\det(J_{11}) = -a_2 a_3 S_3 (a_2 C_2 + a_3 C_{23})
+\end{equation}
+
+We identify two main cases for $\det(J_{11}) = 0$:
+
+\begin{enumerate}
+    \item \textbf{Elbow Singularity}: $S_3 = 0 \implies \theta_3 = 0, \pi$.
+    The arm is either fully extended or folded on itself. Like a 2D manipulator, it loses the radial degree of freedom.
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Capitolo 2/Immagini/armsingularity1.png}
+    \caption{Elbow singularity.}
+    \label{fig:armsinguarity1}
+    \end{figure}
+    
+    \item \textbf{Shoulder Singularity}: $a_2 C_2 + a_3 C_{23} = 0$.
+    This corresponds to the condition where the wrist center lies on the $z_0$ axis ($p_x = p_y = 0$).
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Capitolo 2/Immagini/armsingularity2.png}
+    \caption{Shoulder singularity.}
+    \label{fig:armsinguarity2}
+\end{figure}
+
+\end{enumerate}
+
+
+\paragraph{Note}: When the wrist center is on the $z_0$ axis, the axis becomes a continuum of singularities. In this configuration, a motion along the $z_0$ axis is not allowed, or rather, the joint velocity $\dot{\theta}_1$ becomes indeterminate as it doesn't affect the end-effector position.
+
+\section{Redundancy in Robotics}
+
+\subsection{Definitions}
+\begin{description}
+    \item[$n$:] Degrees of Freedom (D.O.F.)
+    \item[$m$:] Operational space variables
+    \item[$r$:] Operational space variables necessary for a task
+\end{description}
+
+\subsection{Kinematic Redundancy}
+A manipulator is \textbf{kinematically redundant} if the number of DOF is greater than the number of variables necessary to describe a task:
+\[ r < n \]
+It is \textbf{intrinsically redundant} if:
+\[ n > m \]
+
+\paragraph{Example: 3-link Planar Manipulator ($n=m=3$)}
+\begin{itemize}
+    \item If only the end-effector position is considered: $r=2 \implies$ \textbf{Redundant}.
+    \item If the orientation is also considered: $r=3 \implies$ \textbf{Not Redundant}.
+    \item With 4 links: $n=4 > m=3 \implies$ \textbf{Intrinsically Redundant}.
+\end{itemize}
+
+\subsection{Advantages}
+Redundancy provides the manipulator with \textbf{dexterity} and \textbf{versatility}. Specifically, additional DOFs allow the manipulator to \textbf{avoid obstacles} within the workspace.
+

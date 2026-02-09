@@ -1,0 +1,637 @@
+\chapter{Differential Kinematics and Statics}
+
+\subsection{Differential Kinematics}
+Given $\dot{q} \in \mathbb{R}^n$ and $v_e \in \mathbb{R}^r$, the mapping is defined by the Jacobian:
+\[ v_e = J(q)\dot{q} \]
+
+In redundant systems, certain joint velocities result in zero end-effector velocity (\textit{internal motions}).
+\begin{itemize}
+    \item \textbf{If Jacobian has full rank:} 
+    \[ \dim(\mathcal{R}(J)) = r, \quad \dim(\mathcal{N}(J)) = n - r \]
+    \item \textbf{Always true (Rank-Nullity Theorem):} 
+    \[ \dim(\mathcal{R}(J)) + \dim(\mathcal{N}(J)) = n \]
+\end{itemize}
+
+\subsection{General Solution}
+If $\dot{q}^*$ is a solution to $v_e = J\dot{q}$, we can choose a matrix $P \in \mathbb{R}^{n \times n}$ such that $\mathcal{R}(P) \equiv \mathcal{N}(J)$. The general solution is:
+\[ \dot{q} = \dot{q}^* + P\dot{q}_0 \]
+where $\dot{q}_0$ is an \textbf{arbitrary} vector. The matrix $P$ ensures that $\dot{q}_0$ produces only internal motions:
+\[ J\dot{q} = J\dot{q}^* + \underbrace{JP\dot{q}_0}_{=0} = J\dot{q}^* = v_e \]
+Since $P\dot{q}_0 \in \mathcal{N}(J)$, these motions do not affect the end-effector velocity.
+
+\section{Redundant Case}
+
+In the redundant case, the Jacobian matrix $J$ has dimensions $r \times n$ with $r < n$.
+\[ v_e = J(q)\dot{q} \]
+In this scenario, it is not possible to invert $J(q)$ directly. To find $\dot{q}$, a cost function must be minimized:
+\[ g(\dot{q}) = \frac{1}{2} \dot{q}^T W \dot{q} \]
+where $W$ is an $n \times n$ positive definite matrix ($W > 0 \Rightarrow g(\dot{q}) > 0$).
+
+\subsection{Lagrangian Method}
+The optimization problem is formulated as:
+\[ \begin{cases} \min g(\dot{q}) = \frac{1}{2} \dot{q}^T W \dot{q} \\ \text{s.t. } v_e = J(q)\dot{q} \end{cases} \]
+Using the Lagrangian:
+\[ g(\dot{q}, \lambda) = \frac{1}{2} \dot{q}^T W \dot{q} + \lambda^T (v_e - J\dot{q}) \]
+Setting the partial derivatives to zero:
+\begin{enumerate}
+    \item $\left( \frac{\partial g}{\partial \dot{q}} \right)^T = (\dot{q}^T W - \lambda^T J)^T = 0 \Rightarrow W^T \dot{q} - J^T \lambda = 0 \Rightarrow \dot{q} = W^{-1} J^T \lambda$
+    \item $\left( \frac{\partial g}{\partial \lambda} \right)^T = (v_e - J\dot{q})^T = 0 \Rightarrow v_e^T - \dot{q}^T J^T = 0 \Rightarrow v_e = J\dot{q}$
+\end{enumerate}
+
+\subsection{Solution for Joint Velocities}
+Substituting the expression for $\dot{q}$ into the constraint:
+\[ v_e = J W^{-1} J^T \lambda \]
+Assuming the Jacobian has \textbf{full rank} and we are not in a singularity, the dimensions are $[r \times n][n \times n][n \times r] = [r \times r]$.
+Solving for $\lambda$:
+\[ \lambda = (J W^{-1} J^T)^{-1} v_e \]
+The optimal solution is:
+\[ \dot{q} = W^{-1} J^T (J W^{-1} J^T)^{-1} v_e \]
+This is the only solution among the infinite possible ones that minimizes $g(\dot{q})$.
+
+\paragraph{Case $W = I$}
+If we weight the joints equally ($W = I$), the solution simplifies to the \textbf{right pseudo-inverse} $J^+$:
+\[ \dot{q} = J^T (J J^T)^{-1} v_e = J^+ v_e \quad \text{where } J J^+ = I \]
+
+\subsection{Secondary Constraints and Internal Motions}
+If redundancy exists, we can use an arbitrary vector $\dot{q}_0$ to satisfy secondary constraints. The new optimization problem becomes:
+\[ \begin{cases} g(\dot{q}) = \frac{1}{2} (\dot{q} - \dot{q}_0)^T (\dot{q} - \dot{q}_0) \\ \text{s.t. } v_e = J\dot{q} \end{cases} \]
+The Lagrangian leads to the solution:
+\[ \dot{q} = \dot{q}_0 + J^T (J J^T)^{-1} (v_e - J\dot{q}_0) \]
+Rewriting using $J^+$:
+\[ \dot{q} = \dot{q}_0 + J^+ (v_e - J\dot{q}_0) = \dot{q}_0 + J^+ v_e - J^+ J \dot{q}_0 \]
+\[ \dot{q} = J^+ v_e + (I_n - J^+ J) \dot{q}_0 \]
+The term $P = (I_n - J^+ J)$ is a projection matrix. Verified by multiplying by $J$:
+\[ J\dot{q} = \underbrace{J J^+}_{I} v_e + \underbrace{(J - J J^+ J)}_{0} \dot{q}_0 = v_e \]
+
+\subsection{How to choose $\dot{q}_0$}
+The vector $\dot{q}_0$ is typically chosen as the gradient of a secondary cost function $w(q)$:
+\[ \dot{q}_0 = k_0 \left( \frac{\partial w(q)}{\partial q} \right)^T \]
+Examples of $w(q)$:
+\begin{itemize}
+    \item \textbf{Manipulability:} $w(q) = \sqrt{\det(J(q) J^T(q))}$. Maximizing this ensures the Jacobian is far from singularity.
+    \item \textbf{Obstacle Avoidance:} $w(q) = \min_{p, o} \| p(q) - o \|$ (distance from an obstacle).
+\end{itemize}
+
+\section{Redundant Case}
+
+In the redundant case, the Jacobian matrix $J$ is $r \times n$ with $r < n$.
+\[ v_e = J(q)\dot{q} \]
+Since $J(q)$ cannot be inverted directly, we find $\dot{q}$ by minimizing a cost function:
+\[ g(\dot{q}) = \frac{1}{2} \dot{q}^T W \dot{q} \quad \text{with } W_{n \times n} > 0 \Rightarrow g(\dot{q}) > 0 \]
+
+\subsection{Lagrangian Method}
+The optimization problem is:
+\[ \begin{cases} \min g(\dot{q}) = \frac{1}{2} \dot{q}^T W \dot{q} \\ \text{sbj. } v_e = J(q)\dot{q} \end{cases} \]
+Using the Lagrangian:
+\[ g(\dot{q}, \lambda) = \frac{1}{2} \dot{q}^T W \dot{q} + \lambda^T (v_e - J\dot{q}) \]
+Setting derivatives to zero:
+\begin{enumerate}
+    \item $\left( \frac{\partial g}{\partial \dot{q}} \right)^T = (\dot{q}^T W - \lambda^T J)^T = 0 \Rightarrow W^T \dot{q} - J^T \lambda = 0 \Rightarrow \dot{q} = W^{-1} J^T \lambda$
+    \item $\left( \frac{\partial g}{\partial \lambda} \right)^T = (v_e - J\dot{q})^T = 0 \Rightarrow v_e = J\dot{q}$
+\end{enumerate}
+
+\subsection{Solution for Joint Velocities}
+Substituting the previous results:
+\[ v_e = J W^{-1} J^T \lambda \quad \text{(Assuming full rank, not in a singularity)} \]
+\[ \lambda = (J W^{-1} J^T)^{-1} v_e \Rightarrow \dot{q} = W^{-1} J^T (J W^{-1} J^T)^{-1} v_e \]
+If $W = I$ (equally weighted joints), we obtain the \textbf{right pseudo-inverse} $J^+$:
+\[ \dot{q} = J^T (J J^T)^{-1} v_e = J^+ v_e \quad \text{with } J J^+ = I \]
+
+\subsection{Secondary Constraints and Internal Motions}
+If redundancy exists, $\dot{q}_0$ can satisfy secondary constraints:
+\[ \dot{q} = J^+ v_e + (I_n - J^+ J) \dot{q}_0 \]
+Where $P = (I_n - J^+ J)$ is the projection matrix into the null space of $J$.
+
+\paragraph{How to choose $\dot{q}_0$}
+$\dot{q}_0 = k_0 \left( \frac{\partial w(q)}{\partial q} \right)^T$ where $w(q)$ is a secondary cost function:
+\begin{itemize}
+    \item \textbf{Manipulability}: $w(q) = \sqrt{\det(J(q)J^T(q))}$ (far from singularity).
+    \item \textbf{Obstacle Avoidance}: $w(q) = \min_{p,o} \| p(q) - o \|$.
+\end{itemize}
+
+\subsection{Singularity Handling (Non-Full Rank $J$)}
+When $J$ is not full rank, two possibilities arise:
+\begin{itemize}
+    \item $v_e \in \mathcal{R}(J)$: In a singularity, but $v_e$ is \textbf{admissible}.
+    \item $v_e \notin \mathcal{R}(J)$: Nothing we can do.
+\end{itemize}
+In the neighborhood of a singularity, a small $v_e$ leads to a very large $\dot{q}$ due to the small determinant.
+
+\paragraph{Damped Least-Squares (DLS) Inverse}
+The solution is the DLS inverse $J^*$:
+\[ J^* = J^T (J J^T + k^2 I)^{-1} \]
+This comes from minimizing the error $(v_e - J\dot{q})$ without imposing it to be zero, preventing $\dot{q}$ from becoming too big:
+\[ g''(\dot{q}) = \frac{1}{2} (v_e - J\dot{q})^T (v_e - J\dot{q}) + \frac{1}{2} k^2 \dot{q}^T \dot{q} \]
+
+\section{Singularity Handling}
+
+\subsection{Problem Definition}
+When the Jacobian $J$ is not full rank, we face two possibilities:
+\begin{itemize}
+    \item $v_e \in \mathcal{R}(J)$: We are in a singularity, but $v_e$ is \textbf{admissible}.
+    \item $v_e \notin \mathcal{R}(J)$: Nothing we can do.
+\end{itemize}
+Even in the neighborhood of a singularity, a small $v_e$ results in a large $\dot{q}$ due to the small determinant.
+
+\subsection{Damped Least-Squares (DLS) Inverse}
+The solution to this problem is the DLS inverse $J^*$:
+\[ J^* = J^T (J J^T + k^2 I)^{-1} \]
+This is derived from a minimization problem where we minimize the error $(v_e - J\dot{q})$ without forcing it to zero, preventing joint velocities from becoming too large:
+\[ g''(\dot{q}) = \frac{1}{2} (v_e - J\dot{q})^T (v_e - J\dot{q}) + \frac{1}{2} k^2 \dot{q}^T \dot{q} \]
+
+\section{Analytical Jacobian}
+
+\subsection*{Linear and Angular Velocity}
+The linear velocity is the derivative of the position with respect to the joints:
+\[ \dot{p}_e = \frac{\partial p}{\partial q} \dot{q} = J_p(q)\dot{q} \]
+
+For the orientation:
+\[ q \xrightarrow{\text{Direct}} R_e \xrightarrow{\text{Inv.}} \phi_e \]
+
+\subsection{ZYZ Euler Angles Case}
+$\dot{\phi} = \begin{bmatrix} \dot{\varphi} \\ \dot{\vartheta} \\ \dot{\psi} \end{bmatrix}$
+
+Let's consider ZYZ:
+\begin{enumerate}
+    \item $\omega_z = \dot{\varphi} \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}$
+    \item Now the frame is rotated ($R_z$). Now I want to rotate about the $y'$ axis:
+    \[ \omega^0 = \dot{\vartheta} R_z y' = \dot{\vartheta} \begin{bmatrix} c\varphi & -s\varphi & 0 \\ s\varphi & c\varphi & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} 0 \\ 1 \\ 0 \end{bmatrix} \Rightarrow \omega^0 = \dot{\vartheta} \begin{bmatrix} -s\varphi \\ c\varphi \\ 0 \end{bmatrix} \]
+    $R_z y'$ is the $y'$ axis respect to the 0-frame.
+    \item Now the rotation is $R_z R_y$:
+    \[ R_{zy} = \begin{bmatrix} c\varphi c\vartheta & -s\varphi & c\varphi s\vartheta \\ s\varphi c\vartheta & c\varphi & s\varphi s\vartheta \\ -s\vartheta & 0 & c\vartheta \end{bmatrix} \]
+    \[ \omega_0 = \dot{\psi} R_{zy} z'' = \dot{\psi} \begin{bmatrix} c\varphi s\vartheta \\ s\varphi s\vartheta \\ c\vartheta \end{bmatrix} \]
+\end{enumerate}
+
+
+
+The total angular velocity is:
+\[ \omega_e = \begin{bmatrix} 0 & -s\varphi & c\varphi s\vartheta \\ 0 & c\varphi & s\varphi s\vartheta \\ 1 & 0 & c\vartheta \end{bmatrix} \dot{\phi} = T(\phi_e) \dot{\phi} \]
+$\det T = -s^2\varphi s\vartheta - c^2\varphi s\vartheta = -(s^2\varphi + c^2\varphi) s\vartheta = -\sin\vartheta$
+$\det T = 0$ if $\vartheta = 0, \pi \Rightarrow$ \textbf{REPRESENTATION SINGULARITY}
+
+\subsection{Relationship between Jacobians}
+\[ v_e = \begin{bmatrix} I & 0 \\ 0 & T(\phi_e) \end{bmatrix} \dot{x} = T_A(\phi_e) \dot{x} \quad \text{where } \dot{x} = \begin{bmatrix} \dot{p}_e \\ \dot{\phi}_e \end{bmatrix} \]
+$J = T_A(\phi_e) J_A$
+$J_A = T_A^{-1}(\phi_e) J$
+
+$J_A$ is worse because it suffers of both the singularities of $T_A^{-1}(\phi_e)$ and $J$.
+The Geometrical Jacobian is more "physical" ($w$ is the angular velocity).
+In the Analytical Jacobian you use the derivative of parameters we use to describe the pose (Euler, Quaternion...).
+$\dot{\phi}$ is the derivative of $\phi$ used to describe the orientation of the end-effector (not physical).
+
+\textbf{SOMETIMES $J = J_A$}
+
+\section{Inverse Kinematics Algorithms}
+
+The basic numerical approach for inverse kinematics is:
+\[ q(t_{k+1}) = q(t_k) + J^{-1}(q(t_k)) v_e(t_k) \Delta t \]
+It is a \textbf{numerical integration} $\implies$ \textbf{DRIFT}.
+This means that the end-effector pose corresponding to the computed joint variables differs from the desired one.
+$\implies$ We need a \textbf{closed-loop control} that accounts for the operational space error.
+
+\subsection{Closed-Loop Inverse Kinematics (CLIK)}
+Defining the operational space error:
+\[ e = x_d - x_e \]
+The error dynamics are:
+\[ \dot{e} = \dot{x}_d - \dot{x}_e = \dot{x}_d - J_A(q)\dot{q} \]
+(Note: We used operational space variables $\implies$ \textbf{Analytical Jacobian}).
+
+We have to find a relationship between $\dot{q}$ and $e$ in order to have a differential equation describing the error over time.
+If $e \to 0 \implies 0 = \dot{x}_d - J_A(q)\dot{q} \implies \dot{q} = J_A^{-1}(q)\dot{x}_d$ (Open Loop).
+
+\subsection{Jacobian (Pseudo) Inverse}
+Assuming $J_A$ is square and non-singular, we choose:
+\[ \dot{q} = J_A^{-1}(q) (\dot{x}_d + Ke) \]
+where $K$ is a feedback term proportional to the error.
+Replacing this in $\dot{e} = \dot{x}_d - J_A(q)\dot{q}$:
+\[ \dot{e} = \dot{x}_d - J_A J_A^{-1} (\dot{x}_d + Ke) = -Ke \]
+\[ \dot{e} + Ke = 0 \]
+If $K > 0$ is a diagonal matrix $\implies$ the system is \textbf{asymptotically stable}:
+\[ e(t) = e(0) e^{-Kt} \]
+
+\paragraph{For a Redundant Manipulator:}
+The solution incorporates the null-space projection:
+\[ \dot{q} = J_A^{\dagger} (\dot{x}_d + Ke) + (I - J_A^{\dagger} J_A) \dot{q}_0 \]
+
+\subsection{Control Scheme}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Capitolo 3/Immagini/control_scheme}
+    \caption{Closed-loop inverse kinematics control scheme.}
+\end{figure}
+
+\begin{itemize}
+    \item The larger the eigenvalues of $K$, the faster the error convergence.
+    \item But since we use discrete-time systems, we cannot make it too large.
+\end{itemize}
+
+\section{Jacobian Transpose}
+
+Instead of inverting the Jacobian, we can use the \textbf{Jacobian Transpose}. This approach is computationally lighter and avoids problems related to matrix inversion near singularities.
+
+Consider the Lyapunov function candidate:
+\[ V(e) = \frac{1}{2} e^T K^{-1} e > 0 \]
+where $K$ is a positive definite symmetric matrix.
+To guarantee asymptotic stability, we need $\dot{V}(e) < 0$.
+
+Taking the derivative:
+\[ \dot{V} = e^T K^{-1} \dot{e} = e^T K^{-1} (\dot{x}_d - J_A \dot{q}) \]
+Assuming a constant desired pose ($\dot{x}_d = 0$):
+\[ \dot{V} = -e^T K^{-1} J_A \dot{q} \]
+If we choose:
+\[ \dot{q} = J_A^T K e \]
+Then:
+\[ \dot{V} = -e^T K^{-1} J_A J_A^T K e = -(J_A^T e)^T (J_A^T e) \leq 0 \]
+The error will converge to zero as long as the system is not in a singularity where $J_A^T e = 0$ with $e \neq 0$.
+
+\subsection{Comparison: Inverse vs. Transpose}
+\begin{itemize}
+    \item \textbf{Inverse}: Provides a linear error dynamics ($\dot{e} + Ke = 0$), meaning the convergence rate is predictable and constant.
+    \item \textbf{Transpose}: The convergence depends on the state of the manipulator (the Jacobian) and is generally slower, but it is much more robust.
+\end{itemize}
+
+\subsection{Transpose Control Scheme}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Capitolo 3/Immagini/transpose_scheme}
+    \caption{Inverse kinematics control scheme using the Jacobian Transpose.}
+\end{figure}
+
+
+
+\section{Anthropomorphic Arm: Shoulder Singularity}
+
+Let's consider an anthropomorphic arm in the shoulder singularity.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Capitolo 3/Immagini/anthropomorphic_shoulder_singularity}
+    \caption{Anthropomorphic Shoulder Singularity.}
+\end{figure}
+
+\begin{equation}
+p_e = \begin{bmatrix} 0 \\ 0 \\ p_z \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+dim(\mathcal{R}(J_p)) = 2
+\end{equation}
+
+I can only move in 2 dimensions.
+
+\begin{equation}
+\mathcal{R}(J_p) \equiv \mathcal{N}^{\perp}(J_p^T)
+\end{equation}
+
+\begin{equation}
+J_p(q) = \begin{bmatrix} 0 & -c_1(a_2 s_2 + a_3 s_{23}) & -a_3 c_1 s_{23} \\ 0 & -s_1(a_2 s_2 + a_3 s_{23}) & -a_3 s_1 s_{23} \\ 0 & 0 & a_3 c_{23} \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+v_e = J_p \begin{pmatrix} \dot{\alpha} \\ \dot{\beta} \\ \dot{\gamma} \end{pmatrix}
+\end{equation}
+
+\section{Orientation Error}
+
+\subsection{Position}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Capitolo 3/Immagini/orientation_error.png}
+    \caption{}
+\end{figure}
+
+\begin{equation}
+e_p = p_d - p_e(q)
+\end{equation}
+\begin{equation}
+\dot{e}_p = \dot{p}_d - \dot{p}_e
+\end{equation}
+
+\subsection{Euler Angles}
+
+\begin{equation}
+e_o = \phi_d - \phi_e(q)
+\end{equation}
+\begin{equation}
+\dot{e}_o = \dot{\phi}_d - \dot{\phi}_e(q)
+\end{equation}
+
+\begin{equation}
+\dot{q} = J_A^{-1}(q) \begin{bmatrix} \dot{p}_d + K_p e_p \\ \dot{\phi}_d + K_o e_o \end{bmatrix}
+\end{equation}
+
+\section{Angle and Axis}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Capitolo 3/Immagini/angle_and_axis.png}
+    \caption{}
+\end{figure}
+
+\begin{equation}
+R(\theta, r) = R_d R_e^T
+\end{equation}
+Mutual rotation matrix (same origin).
+
+\begin{equation}
+-\frac{\pi}{2} < \theta < \frac{\pi}{2} \quad \text{IT'S OK BECAUSE THE ERROR IS SMALL}
+\end{equation}
+$e_o = 0$ if $\theta = 0, \theta = \pi$.
+
+\begin{equation}
+e_o = r \sin \theta = \frac{1}{2} (n_e \times n_d + s_e \times s_d + a_e \times a_d)
+\end{equation}
+
+\begin{equation}
+\dot{e}_o = L^T \omega_d - L \omega_e
+\end{equation}
+
+\begin{equation}
+L = -\frac{1}{2} (S(n_d)S(n_e) + S(s_d)S(s_e) + S(a_d)S(a_e))
+\end{equation}
+
+\begin{equation}
+\Rightarrow \dot{e} = \begin{bmatrix} \dot{e}_p \\ \dot{e}_o \end{bmatrix} = \begin{bmatrix} \dot{p}_d - J_p(q) \dot{q} \\ L^T \omega_d - L J_o(q) \dot{q} \end{bmatrix} = \begin{bmatrix} \dot{p}_d \\ L^T \omega_d \end{bmatrix} - \begin{bmatrix} I & 0 \\ 0 & L \end{bmatrix} J \dot{q}
+\end{equation}
+
+WE USED THE GEOMETRIC JACOBIAN
+
+\begin{equation}
+\dot{q} = J^{-1}(q) \begin{bmatrix} \dot{p}_d + K_p e_p \\ L^{-1}(L^T \omega_d + K_o e_o) \end{bmatrix}
+\end{equation}
+
+\section{Unit Quaternions}
+
+\begin{equation}
+\Delta Q = Q_d \cdot Q_e^{-1} = \{ \Delta \eta, \Delta \epsilon \}
+\end{equation}
+I ONLY USE $\Delta \epsilon$
+
+\begin{equation}
+e_o = \Delta \epsilon = \eta_e(q) \epsilon_d - \eta_d \epsilon_e(q) - S(\epsilon_d) \epsilon_e(q)
+\end{equation}
+
+\begin{equation}
+\dot{q} = J^{-1}(q) \begin{bmatrix} \dot{p}_d + K_p e_p \\ \omega_d + K_o e_o \end{bmatrix}
+\end{equation}
+
+\section{Second Order Algo.}
+
+We know $\dot{x}_e = J_A(q) \dot{q}$ so:
+
+\begin{equation}
+\ddot{x}_e = J_A(q) \ddot{q} + \dot{J}_A(q, \dot{q}) \dot{q}
+\end{equation}
+
+\begin{equation}
+\ddot{q} = J_A^{-1}(q) \left( \ddot{x}_d + K_D \dot{e} + K_P e - \dot{J}_A(q, \dot{q}) \dot{q} \right)
+\end{equation}
+
+\begin{equation}
+\Rightarrow \ddot{e} + K_D \dot{e} + K_P e = 0 \quad K_D, K_P > 0 \Rightarrow e \rightarrow 0
+\end{equation}
+
+\section{Comparison}
+
+\textit{3 links planar arm.}
+
+\begin{equation}
+x_e = h(q)
+\end{equation}
+
+\begin{equation}
+\begin{bmatrix} p_x \\ p_y \\ \phi_e \end{bmatrix} = \begin{bmatrix} a_1 c_1 + a_2 c_{12} + a_3 c_{123} \\ a_1 s_1 + a_2 s_{12} + a_3 s_{123} \\ \theta_1 + \theta_2 + \theta_3 \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+J_A = \begin{bmatrix} -a_1 s_1 - a_2 s_{12} - a_3 s_{123} & -a_2 s_{12} - a_3 s_{123} & -a_3 s_{123} \\ a_1 c_1 + a_2 c_{12} + a_3 c_{123} & a_2 c_{12} + a_3 c_{123} & a_3 c_{123} \\ 1 & 1 & 1 \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+q_i = \begin{bmatrix} \pi & -\frac{\pi}{2} & -\frac{\pi}{2} \end{bmatrix}^T \quad \text{Initial configuration}
+\end{equation}
+
+\begin{equation}
+p_d(t) = \begin{bmatrix} 0.25 (1 - \cos \pi t) \\ 0.25 (2 + \sin \pi t) \end{bmatrix}
+\end{equation}
+\begin{equation}
+\phi_d = \sin \frac{\pi}{24} t \quad 0 \leq t \leq 4
+\end{equation}
+Desired trajectory
+
+\section{On Matlab}
+
+\begin{equation}
+q(t_{n+1}) = q(t_n) + \dot{q}(t_n) \Delta t \quad \Delta t = 1ms \text{}
+\end{equation}
+
+Let's see with the simple inverse Jacobian
+
+\begin{equation}
+\dot{q} = J_A^{-1}(q) \dot{x}_d
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Capitolo 3/Immagini/drift_plots.png}
+\end{figure}
+
+$\Rightarrow$ Drift 
+
+\section{Let's use the feedback error}
+
+\begin{equation}
+\dot{q} = J_A^{-1} (\dot{x}_d + K e) \quad K = diag \{500, 500, 100\} \text{}
+\end{equation}
+
+\begin{itemize}
+    \item If we don't care about the orientation:
+    \begin{equation}
+    r = 2 \quad n = 3
+    \end{equation}
+    \begin{equation}
+    \dot{q} = J_p^{\dagger} (\dot{p}_d + K_p e_p) \quad K_p = diag \{500, 500\}
+    \end{equation}
+
+    \item We can also use the transpose
+    \begin{equation}
+    \dot{q} = J_p^T(q) K_p e_p \quad K_p = diag \{500, 500\}
+    \end{equation}
+    $\Rightarrow$ Computationally lighter
+
+    \item If it's redundant:
+    \begin{equation}
+    \dot{q} = J_p^{\dagger}(q) (\dot{p}_d + K_p e_p) + (I - J_p^{\dagger} J_p) \dot{q}_0
+    \end{equation}
+\end{itemize}
+
+Manipulability measure:
+
+\begin{equation}
+w(\theta_1, \theta_2) = \frac{1}{2} (s_2^2 + s_3^2) \quad \text{Avoid singularity}
+\end{equation}
+
+\begin{equation}
+\dot{q}_0 = k_0 \left( \frac{\partial w}{\partial q} \right)^T \quad k_0 = 50 \text{}
+\end{equation}
+
+\section{Statics}
+
+Relationship between the forces on the end-effector and the forces on the joints (linear forces for prismatic joints and torques for revolute joints) with the manipulator at the equilibrium.
+
+Elementary work done by torques:
+\begin{equation}
+dW_{\tau} = \tau^T dq \quad \tau \in \mathbb{R}^{n \times 1}, \gamma_e = \begin{bmatrix} f_e \\ \mu_e \end{bmatrix} \in \mathbb{R}^{r \times 1}
+\end{equation}
+
+
+Elementary work done by forces:
+\begin{align}
+dW_{\gamma} &= f_e^T dp_e + \mu_e^T \omega_e dt = \\
+&= f_e^T J_p(q) dq + \mu_e^T J_o(q) dq = \\
+&= \gamma_e^T J(q) dq \quad \text{Geometric Jacobian}
+\end{align}
+
+
+Note: $dp_e = J_p(q) dq$ and $\omega_e = J_o(q) \frac{dq}{dt}$.
+
+\section{Virtual Works Principle}
+
+Virtual work of the joints:
+\begin{equation}
+\delta W_{\tau} = \tau^T \delta q
+\end{equation}
+
+
+Virtual work of the end-effector:
+\begin{equation}
+\delta W_{\gamma} = \gamma_e^T \delta x = \gamma_e^T J(q) \delta q
+\end{equation}
+
+
+Static Equilibrium $\Rightarrow$ The sum of the virtual works must be zero.
+\begin{equation}
+\Rightarrow \delta W_{\tau} = \delta W_{\gamma} \quad \forall \delta q
+\end{equation}
+
+
+So:
+\begin{equation}
+\tau^T \delta q = \gamma_e^T J(q) \delta q \quad \forall q
+\end{equation}
+
+
+\begin{equation}
+\Rightarrow \tau = J^T(q) \gamma_e
+\end{equation}
+
+
+\section{Kineto-Statics Duality}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Capitolo 3/Immagini/kineto_statics_mapping.png}
+    \caption{Mapping between joint space and operational space for velocities and forces.}
+\end{figure}
+
+The relationship $v_e = J(q) \dot{q}$ maps joint velocities to end-effector velocities.
+The relationship $\tau = J^T(q) \gamma_e$ maps end-effector forces to joint torques.
+
+If $\mathcal{N}(J^T) \neq \emptyset$ means that you can find some forces $\gamma_e$ that don't require a $\tau$ in the joints to stay in equilibrium.
+
+\subsection{Singularity Analysis}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.2\textwidth]{Capitolo 3/Immagini/arm_singularity_statics.png}
+\end{figure}
+
+\begin{itemize}
+    \item $\mathcal{R}(J) = \mathcal{N}^{\perp}(J^T)$
+    \item $\mathcal{N}(J) = \mathcal{R}^{\perp}(J^T)$
+\end{itemize}
+
+$\gamma_e \in \mathcal{N}(J^T)$ is totally absorbed by the structure.
+
+\section{Manipulability Ellipsoid}
+
+$\dot{q}^T \dot{q} = 1$ is the set of unit joint velocities.
+It describes the points on a surface of a sphere in the joint velocity space.
+Now we want to see which velocities in the operational space are generated.
+
+Knowing: $\dot{q} = J^{\dagger}(q) v_e$
+
+\begin{equation}
+v_e^T (J^{\dagger T} J^{\dagger}) v_e = 1
+\end{equation}
+
+
+Where $J^{\dagger} = J^T (J J^T)^{-1}$.
+
+\begin{equation}
+v_e^T \left( (J J^T)^{-1} J J^T (J J^T)^{-1} \right) v_e = 1
+\end{equation}
+
+
+\begin{equation}
+v_e^T (J J^T)^{-1} v_e = 1
+\end{equation}
+
+
+(I don't use $\dot{q}_0$ because it doesn't affect the end effector).
+
+\subsection{Properties of the Ellipsoid}
+
+If I compute the eigenvectors of $J J^T$, I find the principal axis of the ellipsoid.
+The dimensions are given by the singular values of $J$: $\sigma_i = \sqrt{\lambda_i (J J^T)}$ for $i=1, \dots, r$, where $\lambda_i (J J^T)$ is an eigenvalue of $J J^T$.
+
+The volume of this ellipsoid is proportional to:
+\begin{equation}
+w(q) = \sqrt{\det(J J^T)}
+\end{equation}
+
+
+In the case of a non-redundant manipulator:
+\begin{equation}
+w(q) = |\det(J(q))|
+\end{equation}
+
+
+\section{Example: 2 Link Planar Arm}
+
+\begin{equation}
+w(q) = |\det(J)| = a_1 a_2 |s_2|
+\end{equation}
+
+
+Maximum for $\theta_2 = \pm \frac{\pi}{2}$.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{Capitolo 3/Immagini/planar_ellipsoid_evolution.png}
+    \caption{Evolution of the manipulability ellipsoid along the workspace.}
+\end{figure}
+
+Meaning: the last configuration is telling us that for a given $\dot{q}$ I will move profoundly in the vertical direction.
+If it's fully stretched we lose a dimension.
+
+\section{Force Ellipsoid}
+
+We can do the same for the forces.
+
+\begin{equation}
+\tau^T \tau = 1 \Rightarrow \gamma_e^T (J(q) J^T(q)) \gamma_e = 1
+\end{equation}
+
+
+The eigenvectors are the same but the eigenvalues are the inverse.
+A direction with a high velocity manipulability has a low force manipulability.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Capitolo 3/Immagini/velocity_force_duality.png}
+    \caption{Duality between velocity (blue) and force (green) ellipsoids.}
+\end{figure}
