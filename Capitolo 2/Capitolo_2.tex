@@ -1,7 +1,25 @@
 \chapter{Kinematics}
+
+A robot can be modeled as a \textbf{kinematic chain}. Consequently, \textbf{Kinematics} focuses on the analytical relationships between joint positions and the end-effector pose, where:
+\begin{itemize}
+    \item \textbf{Joint position} defines the robot's \textit{posture}, i.e., the configuration of the various rigid links as determined by the joint variables.
+    \item \textbf{End-effector pose} is the combination of its position and orientation in space.
+\end{itemize}
+
+The overall motion of the manipulator results from a sequence of elementary movements (revolute or translational) of each joint relative to the preceding one. To describe the relative position and orientation between these elements, we must attach a coordinate frame to each link. 
+
+For instance, consider a fixed inertial reference frame $Oxyz$ and a generic body with its own frame $O'x'y'z'$ attached to it. By "attached" (\textit{solidale}), we imply that the frame moves rigidly with the body.
+
 \section{Pose of a rigid body}
 
+Suppose we want to describe, with respect to the fixed inertial reference frame:
+\begin{itemize}
+    \item The position $o'$ of the origin $O'$.
+    \item The orientation of the frame $x'y'z'$.
+    
 \subsection{Position Representation}
+
+\end{itemize}
 The position of the origin of a mobile coordinate frame $O'$ with respect to a fixed reference frame $O$ is defined by the vector:
 \begin{equation}
 \underline{O}' = o_{x}' \underline{x} + o_{y}' \underline{y} + o_{z}' \underline{z} = \begin{bmatrix} o_{x}' \\ o_{y}' \\ o_{z}' \end{bmatrix}
@@ -93,50 +111,69 @@ For any elementary rotation matrix $R(\theta)$:
 
 \section{Applications of the Rotation Matrix}
 
-The rotation matrix $R$ serves two primary mathematical purposes in robotics: rotating a vector within the same frame or transforming the coordinates of a point between two different frames.
+The \textbf{Rotation Matrix} $R$ is a $3 \times 3$ matrix with three fundamental interpretations:
 
-\subsection{Rotation of a Vector}
-A rotation matrix can be used as an operator to rotate a vector $\underline{p}$ by a certain amount within a fixed reference frame, resulting in a new vector $\underline{p}'$:
+\bigskip
+
+\textbf{Interpretation 1: Description of Orientation} \\
+As detailed in the \textbf{Orientation Representation} section, the rotation matrix provides the orientation of a mobile coordinate frame relative to a reference frame. Its column vectors represent the direction cosines of the axes of the rotated frame with respect to the starting frame.
+
+\bigskip
+
+\textbf{Interpretation 2: Coordinate Transformation} \\
+It represents a mapping that relates the coordinates of the same point $P$ in two different frames. Suppose we have a fixed frame $(x, y, z)$ and a mobile frame $(x', y', z')$ with coincident origins. If we know the position vector $p'$ in the mobile frame, its coordinates $p$ in the fixed frame are:
 \begin{equation}
-\underline{p}' = R \underline{p}
+    p = R p'
 \end{equation}
-In this case, both $\underline{p}$ and $\underline{p}'$ are expressed in the same coordinate system.
-
-\subsection{Change of Reference Frame (Coordinate Transformation)}
-When considering a point $P$ in space and two frames, $0$ (fixed) and $1$ (mobile), the matrix $R_1^0$ maps the coordinates of $P$ relative to frame 1 ($\underline{p}^1$) to its coordinates relative to frame 0 ($\underline{p}^0$):
+Conversely, the inverse transformation is given by:
 \begin{equation}
-\underline{p}^0 = R_1^0 \underline{p}^1
-\end{equation}
-
-\subsection{Inverse Transformation}
-To perform the inverse mapping (from the fixed frame back to the mobile frame), we use the property $R^{-1} = R^T$:
-\begin{equation}
-\underline{p}^1 = (R_1^0)^{-1} \underline{p}^0 = (R_1^0)^T \underline{p}^0
+    p' = R^T p
 \end{equation}
 
-\subsection{Mapping of Vectors}
-If we have a vector $\underline{v}$ expressed in the mobile frame as $\underline{v} = v_x' \underline{x}' + v_y' \underline{y}' + v_z' \underline{z}'$, its representation in the fixed frame is:
+\bigskip
+
+\textbf{Interpretation 3: Rotation Operator} \\
+The matrix acts as an operator that allows rotating a vector within the same coordinate frame. While mathematically identical to Interpretation 2, it is conceptually different: instead of changing the observer's frame, we are physically rotating the vector. The relationship remains:
 \begin{equation}
-\underline{v} = \begin{bmatrix} \underline{x}' & \underline{y}' & \underline{z}' \end{bmatrix} \begin{bmatrix} v_x' \\ v_y' \\ v_z' \end{bmatrix} = R \underline{v}'
+    p_{rotated} = R p_{original}
 \end{equation}
+
+In practical robotics applications, simple elementary rotations around the principal axes are rare. It is much more common to encounter a sequence of multiple rotations, often referred to generic or intermediate axes.
 
 \section{Composition of Rotations}
 
 To obtain the final orientation of a body after multiple rotations, we multiply the individual rotation matrices. The order of multiplication depends on the reference frame.
 
 \subsection{Rules for Composition}
+To determine the final orientation after multiple rotations, we follow these fundamental rules based on the reference axis used:
+
 \begin{itemize}
-    \item \textbf{Fixed Frame (Current is stationary):} If the rotation is performed with respect to the fixed (global) frame, we \textbf{pre-multiply} the existing matrix:
+    \item \textbf{Fixed Frame (Global):} If the rotation is performed with respect to the \textbf{stationary} world frame, we \textbf{pre-multiply} the existing matrix.
     \begin{equation}
     R_{final} = R_{new} \cdot R_{previous}
     \end{equation}
-    \item \textbf{Current Frame (Relative):} If the rotation is performed with respect to the current (local) moving frame, we \textbf{post-multiply}:
+    
+    \textit{Example:} Rotate a body first around the global $Z$ by $\alpha$, then around the global $X$ by $\beta$:
+    \begin{equation}
+    R_{total} = R_{x}(\beta) \cdot R_{z}(\alpha)
+    \end{equation}
+
+    \medskip
+
+    \item \textbf{Current Frame (Relative):} If the rotation is performed with respect to the \textbf{moving} frame (the one attached to the link), we \textbf{post-multiply}.
     \begin{equation}
     R_{final} = R_{previous} \cdot R_{new}
+    \end{equation}
+    
+    \textit{Example:} Rotate a tool first around its local $z$ by $\alpha$, then around its \textbf{new} local $x'$ by $\beta$:
+    \begin{equation}
+    R_{total} = R_{z}(\alpha) \cdot R_{x}(\beta)
     \end{equation}
 \end{itemize}
 
 \section{Euler Angles}
+
+The rotation matrix is a non-minimal representation of orientation in space because it describes it using nine parameters. This redundancy is due to the orthogonality constraints between the column vectors of matrix $R$. This means we cannot specify all values of the rotation matrix independently, as some are redundant.
 
 \subsection{Definition}
 Euler angles are a set of three independent parameters $(\phi, \theta, \psi)$ used to describe any orientation of a rigid body in a 3D Euclidean space. According to Euler's rotation theorem, any rotation can be represented as a sequence of three elementary rotations around the axes of a coordinate system.
@@ -236,6 +273,12 @@ Again, assuming $\sin\theta \neq 0$:
 \paragraph{Degenerate Case (Singularity)}
 If $\sin\theta = 0$ (i.e., $r_{13} = r_{23} = 0$), the orientation is in a singularity called \textit{Gimbal Lock}. In this case, $\theta = 0$ or $\theta = \pi$, and only the sum or difference of $\phi$ and $\psi$ can be identified from the matrix.
 
+\begin{remark}
+    It is important to note that the numerical value of the singularity depends on the chosen Euler sequence. In \textbf{Eulerian sequences} (like the ZYZ used here), the singularity occurs at $\theta = 0, \pi$ because the first and third axes of rotation become collinear. In \textbf{Tait-Bryan sequences} (like the Yaw-Pitch-Roll used in aerospace), the axes are all different, and the singularity (Gimbal Lock) typically occurs at $\theta = \pm 90^\circ$, when the second rotation aligns the first axis onto the third.
+\end{remark}
+
+\textit{Note: While kinematic singularities (we will see them later in detail) must be managed through control and planning, representation singularities can be entirely avoided by adopting different mathematical tools, such as \textbf{Unit Quaternions}, which provide a global parametrization of orientations without singularities.}
+
 \subsection{Numerical Implementation: atan2 vs. atan}
 In the inverse kinematic derivation, the function $\text{atan2}(y, x)$ is used instead of the standard $\arctan(y/x)$ for several critical analytical reasons:
 
@@ -268,6 +311,7 @@ Given a rotation matrix $R$, the parameters $\theta$ and $\underline{r}$ are det
 \underline{r} &= \frac{1}{2\sin\theta} \begin{bmatrix} r_{32} - r_{23} \\ r_{13} - r_{31} \\ r_{21} - r_{12} \end{bmatrix}
 \end{align}
 \textit{Note: As indicated in the notes, for $\theta = 0$ or $\theta = \pi$ there are no physical singularities in the representation, although the specific formula for $\underline{r}$ above is not well-defined at these points (division by zero).}
+
 
 \section{Unit Quaternions (Euler Parameters)}
 
@@ -968,6 +1012,17 @@ The main consequences of being in a singular configuration are:
     \item \textbf{Infinite Solutions}: There may exist infinite solutions for the inverse kinematics problem.
     \item \textbf{Velocity Discontinuity}: In the proximity of a singularity, even small velocities in the operational space can cause extremely large (theoretically infinite) velocities in the joint space.
 \end{itemize}
+    
+\subsection{A Note on Singularities: Kinematic vs. Representation}
+It is crucial to distinguish between \textit{representation singularities} and \textit{kinematic singularities}:
+
+\begin{itemize}
+    \item \textbf{Kinematic (or Physical) Singularities}: These are intrinsic to the robot's mechanical structure. They occur when the Jacobian matrix $J(\underline{q})$ loses rank. At these points, the manipulator loses one or more degrees of freedom in the operational space, and no change in mathematical representation can eliminate them.
+    \item \textbf{Representation (or Algorithmic) Singularities}: These depend on the choice of orientation parameters (like the Euler angles ZYZ discussed in the previous section). 
+\end{itemize}
+
+\textit{Insight: A robot might be in a representation singularity (e.g., Gimbal Lock) while being physically capable of moving in any direction. Conversely, a kinematic singularity represents a physical boundary of the mechanical chain that no software change can bypass but only manage.}
+
 
 \section{Example: 2 Links Planar Arm}
 Consider a planar arm with two revolute joints to analyze its singular configurations.
@@ -1054,6 +1109,7 @@ As we can see, the two column vectors are parallel. Consequently:
 \end{equation}
 The manipulator loses one degree of freedom and cannot move along the direction of the arm itself (radial direction).
 
+
 \section{Spherical Arm + Spherical Wrist}
 In this case, computing the determinant of the full $6 \times 6$ Jacobian and studying the singularities directly is algebraically difficult. To simplify the problem, we split it into two separate sub-problems:
 \begin{enumerate}
@@ -1132,31 +1188,46 @@ We identify two main cases for $\det(J_{11}) = 0$:
 
 \end{enumerate}
 
+\paragraph{Note on Shoulder Singularity}: 
+When the wrist center lies on the $z_0$ axis, the manipulator encounters a \textit{symmetry-related} singularity. In this configuration, an infinite number of values for $\theta_1$ (the base joint) result in the same end-effector position. 
 
-\paragraph{Note}: When the wrist center is on the $z_0$ axis, the axis becomes a continuum of singularities. In this configuration, a motion along the $z_0$ axis is not allowed, or rather, the joint velocity $\dot{\theta}_1$ becomes indeterminate as it doesn't affect the end-effector position.
+Mathematically, the joint velocity $\dot{\theta}_1$ becomes indeterminate because it corresponds to a null space motion that does not affect the position of the wrist. Physically, this means the robot loses the ability to move the wrist in a direction perpendicular to the plane formed by the other links without an instantaneous and physically impossible reconfiguration of the base joint.
 
 \section{Redundancy in Robotics}
 
 \subsection{Definitions}
-\begin{description}
-    \item[$n$:] Degrees of Freedom (D.O.F.)
-    \item[$m$:] Operational space variables
-    \item[$r$:] Operational space variables necessary for a task
-\end{description}
-
-\subsection{Kinematic Redundancy}
-A manipulator is \textbf{kinematically redundant} if the number of DOF is greater than the number of variables necessary to describe a task:
-\[ r < n \]
-It is \textbf{intrinsically redundant} if:
-\[ n > m \]
-
-\paragraph{Example: 3-link Planar Manipulator ($n=m=3$)}
+To analyze redundancy, we define the following parameters:
 \begin{itemize}
-    \item If only the end-effector position is considered: $r=2 \implies$ \textbf{Redundant}.
-    \item If the orientation is also considered: $r=3 \implies$ \textbf{Not Redundant}.
-    \item With 4 links: $n=4 > m=3 \implies$ \textbf{Intrinsically Redundant}.
+    \item $n$: Degrees of Freedom (D.O.F.) of the manipulator (joint space dimension).
+    \item $m$: Dimensions of the operational space (usually 6 for the full pose).
+    \item $r$: Number of variables strictly necessary to perform a specific task ($r \leq m$).
 \end{itemize}
 
-\subsection{Advantages}
-Redundancy provides the manipulator with \textbf{dexterity} and \textbf{versatility}. Specifically, additional DOFs allow the manipulator to \textbf{avoid obstacles} within the workspace.
+\subsection{Types of Redundancy}
+A manipulator is said to be \textbf{kinematically redundant} when it possesses more degrees of freedom than those required for the task:
+\begin{equation}
+    n > r
+\end{equation}
 
+We can distinguish between two fundamental types:
+\begin{itemize}
+    \item \textbf{Intrinsic Redundancy}: The robot's structure is redundant regardless of the task because the joint space is larger than the operational space ($n > m$).
+    \item \textbf{Functional Redundancy}: This is relative to the task. Even if $n = m$, the robot is redundant if the task requires only $r < m$ variables (e.g., a 6-DOF robot performing a 5-variable task).
+\end{itemize}
+
+\paragraph{Illustrative Examples}
+\begin{itemize}
+    \item \textbf{Industrial Applications}: In laser cutting or arc welding, the rotation of the tool around its approach axis is often irrelevant ($r=5$). A standard 6-DOF robot ($n=6$) thus becomes \textit{functionally redundant}.
+    \item \textbf{The Human Arm}: With 7 D.O.F. (3 at the shoulder, 1 at the elbow, 3 at the wrist), the human arm is \textit{intrinsically redundant}. If we fix the hand in a specific pose ($m=6$), we can still move the elbow.
+\end{itemize}
+
+\subsection{Why use Redundancy?}
+Redundancy is intentionally introduced to provide the manipulator with \textbf{dexterity} and \textbf{versatility}. The "extra" degrees of freedom can be exploited for several secondary objectives:
+\begin{enumerate}
+    \item \textbf{Obstacle Avoidance}: Reconfiguring the internal structure (the "elbow") to bypass obstacles while keeping the end-effector on its trajectory.
+    \item \textbf{Joint Limit Avoidance}: If a joint approaches its mechanical limit, the redundant degrees of freedom can compensate to complete the motion.
+    \item \textbf{Singularity Avoidance}: Moving the robot away from kinematic singularities without changing the end-effector path.
+\end{enumerate}
+    
+\subsection{Concluding Remarks on Redundancy}
+While this chapter establishes the geometric conditions for redundancy based on the kinematic structure, the mathematical framework to solve the underdetermined velocity mapping $\underline{v}_e = J(\underline{q})\underline{\dot{q}}$ and exploit the internal motions of redundant robots will be addressed in the context of Differential Kinematics (Chapter 3).

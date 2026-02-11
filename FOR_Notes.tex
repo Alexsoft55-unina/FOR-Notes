@@ -5,6 +5,9 @@
 \usepackage{amssymb}
 \usepackage{geometry}
 \usepackage{tikz}
+\usepackage{amsthm} % Pacchetto per teoremi e annotazioni
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 
 \geometry{a4paper, margin=1in}
@@ -16,8 +19,9 @@
 \title{FOR Notes}
 \author{GIOCATORI SERI}
 \maketitle
-\input{Capitolo 1/Capitolo_1.tex}
 \tableofcontents % Questo genera il sommario
+
+\input{Capitolo 1/Capitolo_1.tex}
 \input{Capitolo 2/Capitolo_2.tex}
 \input{Capitolo 3/Capitolo_3.tex}
 \input{Capitolo 4/Capitolo_4.tex}

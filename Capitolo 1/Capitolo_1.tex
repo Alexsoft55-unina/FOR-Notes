@@ -1,4 +1,75 @@
 \chapter{Introduction}
+
+\section{Definition and Origins}
+Robotics is commonly defined as the science that studies the intelligent connection between perception and action. Its primary objective is to study machines capable of replacing humans in the execution of tasks, involving both physical and decision-making activities.
+
+The term \textit{robot} was first coined in 1920 by the Czech playwright Karel Capek in his play \textit{R.U.R. (Rossum's Universal Robots)}, deriving it from the Slavic word \textit{robota}, which refers to executive labor. Later, Isaac Asimov introduced the term \textit{robotics} and conceptualized the robot not as a creature of sentiment, but as an industrial product governed by safety rules known as the Three Laws of Robotics.
+
+\section{Components of a Robotic System}
+A robot is a complex system consisting of several interconnected sub-systems:
+
+\begin{itemize}
+    \item \textbf{Mechanical System:} This is the essential component of the robot, enabling it to interact with the environment. It is composed of:
+    \begin{itemize}
+        \item \textit{Locomotion organs:} Devices such as wheels, tracks, or mechanical legs that allow the robot to move freely in the environment (mobile robots).
+        \item \textit{Manipulation organs:} Mechanisms like mechanical arms, end-effectors, and artificial hands designed to manipulate objects.
+    \end{itemize}
+    
+    \item \textbf{Actuation System:} This system animates the mechanical components, providing the capacity to exert motion and manipulation. It relies on:
+    \begin{itemize}
+        \item Power sources (electric, pneumatic, or hydraulic).
+        \item Motion control devices such as servomotors, drives, and transmission elements.
+    \end{itemize}
+    
+    \item \textbf{Sensory System:} This system grants the robot the capacity of perception. It is divided into:
+    \begin{itemize}
+        \item \textit{Proprioceptive sensors:} These measure the internal state of the robot (e.g., position transducers like encoders).
+        \item \textit{Exteroceptive sensors:} These acquire information about the external environment (e.g., force sensors, cameras).
+    \end{itemize}
+    
+    \item \textbf{Control System:} This unit ensures the intelligent connection between action and perception. It commands the execution of actions to meet task objectives while respecting kinematic and dynamic constraints, often utilizing feedback loops and modeling techniques.
+\end{itemize}
+
+\section{Mechanical Structure and Topology}
+From a topological point of view, a robot manipulator is modeled as a \textbf{kinematic chain}, which is a sequence of rigid bodies connected by articulations.
+
+\begin{itemize}
+    \item \textbf{Links:} The rigid and passive components of the system (arms).
+    \item \textbf{Joints:} The connecting elements between links that ensure mobility. Joints are the active parts subject to control and represent the degrees of freedom (DoF) of the structure. A joint connecting two consecutive links can be:
+    \begin{enumerate}
+        \item[A.] \textbf{Revolute:} Provides a rotational degree of freedom (relative rotation). These are often preferred for their compactness and reliability.
+        \item[B.] \textbf{Prismatic:} Provides a translational degree of freedom (relative translation).
+    \end{enumerate}
+\end{itemize}
+
+\subsection{Kinematic Chains and Degrees of Freedom}
+The structure of the manipulator can be classified topologically:
+\begin{itemize}
+    \item \textbf{Open (Serial) Kinematic Chain:} There is a single sequence of links connecting the base to the end-effector. In this configuration, every joint provides a single degree of freedom.
+    \item \textbf{Closed Kinematic Chain:} A sequence of links forms a loop. In this case, the number of degrees of freedom is less than the number of joints due to geometric constraints. Closed chains (e.g., parallel robots) offer higher stiffness and speed but a reduced workspace.
+\end{itemize}
+
+To position and orient an object arbitrarily in 3D space, a manipulator requires at least \textbf{six degrees of freedom} (three for positioning, three for orientation). If a manipulator possesses more DoFs than required for a specific task, it is defined as \textit{kinematically redundant}.
+
+\subsection{Classification of Manipulators}
+Based on the arrangement of the first three joints (the supporting structure), manipulators are classified into:
+\begin{itemize}
+    \item \textbf{Cartesian:} Three prismatic joints with orthogonal axes. High stiffness and accuracy, rectangular workspace.
+    \item \textbf{Cylindrical:} One revolute joint at the base and two prismatic joints. Hollow cylindrical workspace.
+    \item \textbf{Spherical:} Two revolute joints and one prismatic joint. Hollow spherical workspace.
+    \item \textbf{SCARA:} Two parallel vertical revolute joints and one prismatic joint. High vertical stiffness, compliant horizontally (ideal for assembly).
+    \item \textbf{Anthropomorphic:} Three revolute joints mimicking the human arm (shoulder, elbow). It is the most dexterous structure with a spherical workspace.
+\end{itemize}
+
+\subsection{Mobile Robots}
+Unlike manipulators, mobile robots have a potentially unlimited workspace. Their locomotion is typically achieved via wheels, such as:
+\begin{itemize}
+    \item \textit{Fixed wheels:} No steering axis.
+    \item \textit{Steerable (Orientable) wheels:} Can rotate around a vertical axis.
+    \item \textit{Castor wheels:} Used for stability, they align automatically with motion.
+    \item \textit{Mecanum wheels:} Allow for omnidirectional movement.
+\end{itemize}
+
 \section{Syllabus}
 \begin{itemize}
 \item
